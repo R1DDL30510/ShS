@@ -1,51 +1,51 @@
-# Docker Compose Setup
+# Docker-Compose-Einrichtung
 
-## Prerequisites
-- Docker Desktop with WSL2 backend and (optionally) the NVIDIA Container Toolkit for GPU workloads.
-- Recent NVIDIA drivers when GPU acceleration is required.
-- Ollama installed natively on the host and running on port `11434` when models should be served locally.
+## Voraussetzungen
+- Docker Desktop mit WSL2-Backend und optional dem NVIDIA Container Toolkit für GPU-Workloads.
+- Aktuelle NVIDIA-Treiber, wenn GPU-Beschleunigung benötigt wird.
+- Ollama nativ auf dem Host installiert und auf Port `11434` laufend, wenn Modelle lokal bereitgestellt werden sollen.
 
-## Quick Start
+## Schnellstart
 ```powershell
 cd docker
-# create .env if overrides (paths, ports, GPU selection) are needed
+# .env erstellen, falls Overrides (Pfade, Ports, GPU-Auswahl) erforderlich sind
 docker compose --profile worker up -d --build
 docker compose --profile diffusion up -d   # Stable Diffusion optional
 ```
 
-## Services & Profiles
-- `shs-worker`: .NET orchestration worker (profile: `worker`). Bundles the Docker CLI and uses the `/var/run/docker.sock` mount to talk to the host daemon.
-- `open-webui`, `qdrant`: Start by default with no profile flag and are labelled with `shs.role` for worker detection.
-- `automatic1111`: Only starts when the `diffusion` profile is supplied. GPU access is exposed through the `deploy.resources.reservations.devices` entry and the `NVIDIA_VISIBLE_DEVICES`/`AUTOMATIC1111_GPU_*` environment variables. The container runs `docker/automatic1111_patch.py` before launching Stable Diffusion.
+## Dienste & Profile
+- `shs-worker`: .NET-Orchestrierungs-Worker (Profil: `worker`). Enthält die Docker-CLI und nutzt das Mount `/var/run/docker.sock`, um mit dem Host-Daemon zu kommunizieren.
+- `open-webui`, `qdrant`: Starten standardmäßig ohne Profil-Flag und sind mit `shs.role` gelabelt, damit der Worker sie erkennt.
+- `automatic1111`: Startet nur, wenn das Profil `diffusion` angegeben wird. GPU-Zugriff erfolgt über den Eintrag `deploy.resources.reservations.devices` sowie die Umgebungsvariablen `NVIDIA_VISIBLE_DEVICES`/`AUTOMATIC1111_GPU_*`. Der Container führt vor dem Start von Stable Diffusion `docker/automatic1111_patch.py` aus.
 
-## GPU Limits
-- Default `OLLAMA_MAX_GPU_MEMORY=0.8` (80% target load), configurable via `.env`.
-- Stable Diffusion launches with `--medvram` and `--opt-sdp-attention`; extend the flags through `AUTOMATIC1111_ARGS`.
-- GPU selection defaults to `all` through `AUTOMATIC1111_GPU_SELECTION`/`AUTOMATIC1111_GPU_COUNT` and can be narrowed per host.
-- The worker records configured GPU guardrails for awareness only; enforcement is not yet implemented.
+## GPU-Limits
+- Standard `OLLAMA_MAX_GPU_MEMORY=0.8` (80 % Zielauslastung), konfigurierbar über `.env`.
+- Stable Diffusion startet mit `--medvram` und `--opt-sdp-attention`; erweitern Sie die Flags über `AUTOMATIC1111_ARGS`.
+- Die GPU-Auswahl ist standardmäßig auf `all` gesetzt (`AUTOMATIC1111_GPU_SELECTION`/`AUTOMATIC1111_GPU_COUNT`) und kann hostabhängig eingeschränkt werden.
+- Der Worker protokolliert konfigurierte GPU-Schutzmaßnahmen lediglich zur Transparenz; eine Durchsetzung existiert noch nicht.
 
-> ⚠️ **Revision Flag:** Update this section once GPU enforcement or alternative profiles are introduced.
+> ⚠️ **Revisionshinweis:** Aktualisieren Sie diesen Abschnitt, sobald GPU-Durchsetzung oder alternative Profile eingeführt werden.
 
 ## Volumes
-- Data root: `../data` relative to the repo (`open-webui`, `qdrant`, `automatic1111`).
-- Models: `../models/stable-diffusion` holds AUTOMATIC1111 checkpoints.
-- Workspace: `../stablediff/stable-diffusion-webui` (when present) is mounted read-only for patch scripts.
+- Daten-Root: `../data` relativ zum Repository (`open-webui`, `qdrant`, `automatic1111`).
+- Modelle: `../models/stable-diffusion` enthält AUTOMATIC1111-Checkpoints.
+- Workspace: `../stablediff/stable-diffusion-webui` (falls vorhanden) wird schreibgeschützt für Patch-Skripte eingebunden.
 
 ## Health Checks
-- Check container states with `docker compose ps`.
+- Containerzustände mit `docker compose ps` prüfen.
 - OpenWebUI: `curl http://localhost:3003/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.
-- AUTOMATIC1111 (when the `diffusion` profile is active): `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
-- The worker logs detected services every 30 seconds (`docker compose logs shs-worker`).
+- AUTOMATIC1111 (wenn das Profil `diffusion` aktiv ist): `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
+- Der Worker protokolliert alle 30 Sekunden erkannte Dienste (`docker compose logs shs-worker`).
 
-## Checkpoints
-1. **Checkpoint 1 – Ollama/OpenWebUI**  
-   - `docker compose --profile worker up -d --build`  
-   - Verify `shs-stack-open-webui-1` is healthy on `http://localhost:3003` and `shs-stack-qdrant-1` is serving `http://localhost:6334/readyz`.  
-   - Run `dotnet run --project SecureHomeSystem` (or the worker container) to confirm detection logs show both services.
-2. **Checkpoint 2 – Stable Diffusion Ready**  
-   - `docker compose --profile worker --profile diffusion up -d --build`  
-   - Ensure GPUs are available to Docker Desktop (`nvidia-smi` inside WSL).  
-   - Confirm `shs-stack-automatic1111-1` responds to `http://localhost:7860/sdapi/v1/txt2img`.  
-   - Review worker logs for a detected `stable-diffusion` entry before tagging the baseline.  
-   - Compose injects `docker/automatic1111_patch.py` at container start to work around legacy AUTOMATIC1111 builds that omit `sd_model_checkpoint` in `/sdapi/v1/options`.
+## Kontrollpunkte
+1. **Checkpoint 1 – Ollama/OpenWebUI**
+   - `docker compose --profile worker up -d --build`
+   - Prüfen Sie, dass `shs-stack-open-webui-1` unter `http://localhost:3003` im Zustand „healthy“ ist und `shs-stack-qdrant-1` `http://localhost:6334/readyz` bedient.
+   - Führen Sie `dotnet run --project SecureHomeSystem` (oder den Worker-Container) aus, um zu bestätigen, dass die Logs beide Dienste anzeigen.
+2. **Checkpoint 2 – Stable Diffusion bereit**
+   - `docker compose --profile worker --profile diffusion up -d --build`
+   - Sicherstellen, dass GPUs für Docker Desktop verfügbar sind (`nvidia-smi` innerhalb von WSL).
+   - Bestätigen Sie, dass `shs-stack-automatic1111-1` auf `http://localhost:7860/sdapi/v1/txt2img` reagiert.
+   - Überprüfen Sie die Worker-Logs auf einen erkannten Eintrag `stable-diffusion`, bevor Sie den Baseline-Stand kennzeichnen.
+   - Compose injiziert beim Containerstart `docker/automatic1111_patch.py`, um Legacy-AUTOMATIC1111-Builds zu umgehen, die `sd_model_checkpoint` in `/sdapi/v1/options` auslassen.

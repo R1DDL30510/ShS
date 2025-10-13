@@ -1,39 +1,39 @@
-# Configuration Reference
+# Konfigurationsreferenz
 
-The worker loads configuration from `SecureHomeSystem/appsettings.json`, with overrides applied by environment variables or additional JSON files such as `appsettings.Development.json`. The sections below list the supported keys and their defaults in this repository.
+Der Worker lädt die Konfiguration aus `SecureHomeSystem/appsettings.json`, wobei Überschreibungen über Umgebungsvariablen oder zusätzliche JSON-Dateien wie `appsettings.Development.json` angewendet werden. Die folgenden Abschnitte listen die unterstützten Schlüssel und ihre Standardwerte in diesem Repository auf.
 
 ## `Docker`
-- `ComposeFilePath` (`string`): Path to the Compose file. Default: `docker/compose.yaml`.
-- `EnvironmentFile` (`string`): Relative path to the Compose `.env` file. Default: `docker/.env`.
-- `ProjectName` (`string`): Compose project name used when running CLI commands. Default: `shs-stack`.
-- `AutoStartProfiles` (`string[]`): Compose profiles the worker will attempt to start (repository default: `["worker"]`, development override adds `"diffusion"`).
-- `Detection` (`ServiceDetectionOptions`): Nested settings that control how Docker containers are matched.
+- `ComposeFilePath` (`string`): Pfad zur Compose-Datei. Standard: `docker/compose.yaml`.
+- `EnvironmentFile` (`string`): Relativer Pfad zur Compose-`.env`-Datei. Standard: `docker/.env`.
+- `ProjectName` (`string`): Compose-Projektname, der bei CLI-Befehlen verwendet wird. Standard: `shs-stack`.
+- `AutoStartProfiles` (`string[]`): Compose-Profile, die der Worker zu starten versucht (Repository-Standard: `["worker"]`, Entwicklungs-Override fügt `"diffusion"` hinzu).
+- `Detection` (`ServiceDetectionOptions`): Verschachtelte Einstellungen, die steuern, wie Docker-Container zugeordnet werden.
 
 ### `Docker:Detection`
-- `LabelSelector` (`Dictionary<string,string>`): Expected Docker label filters keyed by logical service name. Defaults map the worker to the `shs.role` labels applied in `docker/compose.yaml` (`open-webui`, `qdrant`, `stable-diffusion`).
-- `StartupTimeoutSeconds` (`int`): Time window (seconds) allowed for a service to appear before detection reports a timeout. Default: `120`.
-- `RetryCount` (`int`): Number of detection retries before escalating. Default: `3`.
+- `LabelSelector` (`Dictionary<string,string>`): Erwartete Docker-Label-Filter, nach logischem Dienstnamen indiziert. Standardwerte ordnen den Worker den in `docker/compose.yaml` gesetzten `shs.role`-Labels zu (`open-webui`, `qdrant`, `stable-diffusion`).
+- `StartupTimeoutSeconds` (`int`): Zeitfenster (Sekunden), in dem ein Dienst erscheinen muss, bevor die Erkennung einen Timeout meldet. Standard: `120`.
+- `RetryCount` (`int`): Anzahl der Erkennungsversuche, bevor eskaliert wird. Standard: `3`.
 
 ## `Services`
 ### `Services:Ollama`
-- `BaseUrl` (`string`): Endpoint used for worker log messages. Repository default: `http://host.docker.internal:11434`.
-- `MaxGpuMemoryFraction` (`double`): Desired VRAM cap exposed to operators and downstream tooling. Default: `0.8` (80%).
-- `HealthEndpoint` (`string`): Path used for health checks. Default: `/api/tags`.
+- `BaseUrl` (`string`): Endpunkt, der für Worker-Protokolle verwendet wird. Repository-Standard: `http://host.docker.internal:11434`.
+- `MaxGpuMemoryFraction` (`double`): Gewünschtes VRAM-Limit, das Operatoren und Downstream-Tools kommuniziert wird. Standard: `0.8` (80 %).
+- `HealthEndpoint` (`string`): Pfad für Health Checks. Standard: `/api/tags`.
 
 ### `Services:OpenWebUi`
-- `BaseUrl` (`string`): URL announced by the worker. Repository default: `http://localhost:3003` (matching the Compose port binding).
-- `RequireAuth` (`bool`): Mirrors the authentication flag supplied to the OpenWebUI container. Default: `false`.
-- `HealthEndpoint` (`string`): Path used for manual health checks. Default: `/api/system/info`.
+- `BaseUrl` (`string`): URL, die der Worker ankündigt. Repository-Standard: `http://localhost:3003` (entspricht dem Compose-Port-Binding).
+- `RequireAuth` (`bool`): Spiegelt das Authentifizierungsflag wider, das dem OpenWebUI-Container übergeben wird. Standard: `false`.
+- `HealthEndpoint` (`string`): Pfad für manuelle Health Checks. Standard: `/api/system/info`.
 
 ### `Services:StableDiffusion`
-- `BaseUrl` (`string`): Stable Diffusion UI endpoint. Repository default: `http://localhost:7860`.
-- `LaunchProfile` (`string`): Compose profile that must be enabled for Stable Diffusion. Default: `diffusion`.
-- `SmokeTestPrompt` (`string`): Short prompt placeholder for future smoke tests. Default: `Generate a 64x64 diagnostic image`.
+- `BaseUrl` (`string`): Endpunkt der Stable-Diffusion-Oberfläche. Repository-Standard: `http://localhost:7860`.
+- `LaunchProfile` (`string`): Compose-Profil, das für Stable Diffusion aktiviert sein muss. Standard: `diffusion`.
+- `SmokeTestPrompt` (`string`): Kurzer Prompt-Platzhalter für zukünftige Smoke-Tests. Standard: `Generate a 64x64 diagnostic image`.
 
 ## `ResourceScheduler`
-- `GpuUtilisationThreshold` (`double`): Preferred utilisation ceiling recorded in configuration. Default: `0.5` (50%).
-- `GpuMemoryThreshold` (`double`): Preferred VRAM ceiling recorded in configuration. Default: `0.8` (80%).
-- `PollIntervalSeconds` (`int`): Sampling cadence placeholder for future GPU telemetry. Default: `5` (development override reduces to `3`).
-- `QueueBackoffSeconds` (`int`): Delay placeholder for retrying queued jobs. Default: `30` (development override reduces to `10`).
+- `GpuUtilisationThreshold` (`double`): Bevorzugte Auslastungsobergrenze, die in der Konfiguration hinterlegt ist. Standard: `0.5` (50 %).
+- `GpuMemoryThreshold` (`double`): Bevorzugte VRAM-Obergrenze, die in der Konfiguration hinterlegt ist. Standard: `0.8` (80 %).
+- `PollIntervalSeconds` (`int`): Platzhalter für die Abtastfrequenz zukünftiger GPU-Telemetrie. Standard: `5` (Entwicklungs-Override reduziert auf `3`).
+- `QueueBackoffSeconds` (`int`): Platzhalter-Verzögerung für den erneuten Versuch wartender Jobs. Standard: `30` (Entwicklungs-Override reduziert auf `10`).
 
-> **Note:** The worker currently records resource policy targets for operational awareness; automated enforcement is not yet implemented.
+> **Hinweis:** Der Worker zeichnet derzeit Zielwerte der Ressourcenrichtlinien zur operativen Transparenz auf; eine automatische Durchsetzung ist noch nicht implementiert.
