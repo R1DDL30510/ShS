@@ -16,8 +16,8 @@ public sealed class OllamaOptions
 
 public sealed class OpenWebUiOptions
 {
-    public string BaseUrl { get; set; } = "http://localhost:3000";
-    public bool RequireAuth { get; set; }
+    public string BaseUrl { get; set; } = "http://localhost:3003";
+    public bool RequireAuth { get; set; } = false;
     public string HealthEndpoint { get; set; } = "/api/system/info";
 }
 
@@ -25,5 +25,5 @@ public sealed class StableDiffusionOptions
 {
     public string BaseUrl { get; set; } = "http://localhost:7860";
     public string LaunchProfile { get; set; } = "diffusion";
-    public string SmokeTestPrompt { get; set; } = "test prompt";
+    public string SmokeTestPrompt { get; set; } = "Generate a 64x64 diagnostic image";
 }
