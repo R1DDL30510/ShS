@@ -2,6 +2,9 @@
 
 Use this outline to produce a polished slide deck (≈15 slides) for stakeholders. Each slide lists narrative points, data sources, and a screenshot placeholder with guidance on what to capture from your environment.
 
+> 💼 **Release-Day Link:** Pair this outline with `docs/operations/release-day-playbook.md` so talking points, demo steps, and
+> revision flags stay synchronised between the slide deck and live presentation.
+
 ## Slide 1 – Title & Vision
 - Present the solution name: "SecureHomeSystem – AI-Assisted Home Orchestration".
 - Tagline: "Coordinating LLM and image workloads for home automation".
