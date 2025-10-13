@@ -56,7 +56,7 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 
 ## Development Workflow
 - Run the worker locally with `dotnet run --project SecureHomeSystem` to iterate without containers.
-- Execute unit or integration tests (when available) via `dotnet test`.
+- Execute unit or integration tests when they are introduced; **no automated test suite ships with the repository yet.**
 - Container builds install the Docker CLI within the runtime image so the worker can communicate with the host daemon when deployed in Compose.
 
 ## Repository Structure
@@ -84,4 +84,9 @@ Operational issues and feature proposals should be tracked via the repository is
 2. Adhere to .NET coding conventions and ensure new services include Docker labels for detection.
 3. Provide documentation updates (runbook or configuration reference) alongside feature changes.
 4. Open a pull request with context, testing evidence, and rollback considerations.
+
+## Revision Flags
+- ⚠️ **Worker health endpoint** – The worker currently has no HTTP health probe; update documentation once an endpoint is implemented.
+- ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
+- ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
 

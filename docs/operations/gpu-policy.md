@@ -20,3 +20,5 @@ The repository captures desired GPU utilisation targets in configuration and Com
 ## Future Enhancements
 - Implement automated enforcement based on the recorded thresholds.
 - Surface telemetry and alerting (metrics/events) once scheduling logic is in place.
+
+> ⚠️ **Revision Flag:** Refresh this policy once scheduling automation or telemetry features are delivered.
