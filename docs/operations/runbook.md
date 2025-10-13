@@ -6,7 +6,7 @@
 - `Get-Service Ollama` in PowerShell confirms the native Ollama service.
 
 ## Logs
-- Worker: `docker logs shs-worker-1` or Windows Event Log (`Applications and Services Logs/SecureHomeSystem`).
+- Worker: `docker compose logs shs-worker` or Windows Event Log (`Applications and Services Logs/SecureHomeSystem`).
 - OpenWebUI: `docker logs shs-stack-open-webui-1`.
 - Stable Diffusion: `docker logs shs-stack-automatic1111-1`.
 
@@ -17,8 +17,8 @@
 
 ## Health Checks
 - Worker endpoint (planned): `http://localhost:5169/health`.
-- OpenWebUI: `curl http://localhost:3000/api/system/info`.
-- Qdrant: `curl http://localhost:6333/readyz`.
+- OpenWebUI: `curl http://localhost:3003/api/system/info`.
+- Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111: `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
 
 ## Data Paths
@@ -30,3 +30,4 @@
 - **Permission denied** during `git add`: close Visual Studio or keep `.vs/` ignored.
 - **GPU not visible**: run `nvidia-smi` and enable GPU support in Docker Desktop.
 - **Service missing**: ensure the `shs.role` label exists and matches `Docker:Detection:LabelSelector`.
+- **Docker CLI missing**: the worker requires access to the `docker` binary. When containerised, keep the `/var/run/docker.sock` mount present; when running natively, ensure Docker Desktop is installed and `docker` is on `PATH`.

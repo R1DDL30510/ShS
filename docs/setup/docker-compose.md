@@ -9,12 +9,12 @@
 ```powershell
 cd docker
 Copy-Item .env.example .env
-docker compose --profile worker up -d
+docker compose --profile worker up -d --build
 docker compose --profile diffusion up -d   # Stable Diffusion optional
 ```
 
 ## Dienste & Profile
-- `shs-worker`: .NET Worker-Orchestrator (`worker` Profil).
+- `shs-worker`: .NET Worker-Orchestrator (`worker` Profil). Enthält die Docker CLI und greift über das gemountete `/var/run/docker.sock` auf den Host-Daemon zu.
 - `open-webui`, `qdrant`: Standardprofile, werden immer gestartet.
 - `automatic1111`: Nur mit Profil `diffusion`; GPU-Zugriff via `gpus: all`.
 
@@ -30,7 +30,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 
 ## Health Checks
 - Immediately after startup the worker runs smoke tests:
-  - OpenWebUI via `GET /api/system/info`
-  - Qdrant via `GET /readyz`
+  - OpenWebUI via `GET http://localhost:3003/api/system/info`
+  - Qdrant via `GET http://localhost:6334/readyz`
   - AUTOMATIC1111 via a low-cost `/sdapi/v1/txt2img` request
 - Failures trigger automatic restart attempts and pause the job queue.

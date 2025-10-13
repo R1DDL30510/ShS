@@ -12,7 +12,7 @@
 - `HealthEndpoint` (`string`): Path used for availability checks (`GET /api/tags`).
 
 ## `OpenWebUI`
-- `BaseUrl` (`string`): `http://localhost:${WEBUI_PORT}`.
+- `BaseUrl` (`string`): `http://localhost:${WEBUI_PORT}` (default `3003`).
 - `RequireAuth` (`bool`): Mirrors the `WEBUI_AUTH` env flag.
 - `HealthEndpoint` (`string`): `GET /api/system/info`.
 
@@ -31,3 +31,4 @@
 - `LabelSelector` (`Dictionary<string,string>`): Expected Docker labels (key = service, value = label match).
 - `StartupTimeoutSeconds` (`int`): Time window before detection fails a service.
 - `RetryCount` (`int`): Restart attempts before the worker escalates.
+- The worker expects the Docker CLI (`docker`) to be available. In container scenarios the compose file mounts `/var/run/docker.sock`.

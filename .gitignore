@@ -1,3 +1,7 @@
 .vs/
 bin/
 obj/
+data/
+models/
+stablediff/
+docker/.env
