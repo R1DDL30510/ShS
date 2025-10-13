@@ -24,6 +24,8 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 - GPU selection defaults to `all` through `AUTOMATIC1111_GPU_SELECTION`/`AUTOMATIC1111_GPU_COUNT` and can be narrowed per host.
 - The worker records configured GPU guardrails for awareness only; enforcement is not yet implemented.
 
+> ⚠️ **Revision Flag:** Update this section once GPU enforcement or alternative profiles are introduced.
+
 ## Volumes
 - Data root: `../data` relative to the repo (`open-webui`, `qdrant`, `automatic1111`).
 - Models: `../models/stable-diffusion` holds AUTOMATIC1111 checkpoints.
