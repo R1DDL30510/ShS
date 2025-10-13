@@ -31,3 +31,4 @@
 - **GPU not visible**: run `nvidia-smi` and enable GPU support in Docker Desktop.
 - **Service missing**: ensure the `shs.role` label exists and matches `Docker:Detection:LabelSelector`.
 - **Docker CLI missing**: the worker requires access to the `docker` binary. When containerised, keep the `/var/run/docker.sock` mount present; when running natively, ensure Docker Desktop is installed and `docker` is on `PATH`.
+- **AUTOMATIC1111 options API fails** (`sd_model_checkpoint` KeyError): the stack auto-runs `docker/automatic1111_patch.py` to coerce legacy images; rerun `docker compose up -d --force-recreate automatic1111` if a rebuilt container loses the patch.
