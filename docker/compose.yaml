@@ -1,0 +1,68 @@
+name: shs-stack
+
+services:
+  shs-worker:
+    build:
+      context: ..
+      dockerfile: SecureHomeSystem/Dockerfile
+    image: shs-worker:local
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      - DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Development}
+    depends_on:
+      - open-webui
+    profiles:
+      - worker
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.3.7
+    restart: unless-stopped
+    ports:
+      - "${WEBUI_PORT:-3000}:8080"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - WEBUI_AUTH=${OPENWEBUI_AUTH:-false}
+      - OLLAMA_MAX_GPU_MEMORY=${OLLAMA_MAX_GPU_MEMORY:-0.8}
+    volumes:
+      - ${DATA_DIR:-../data}/open-webui:/app/backend/data
+    labels:
+      shs.role: open-webui
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.4
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - ${DATA_DIR:-../data}/qdrant:/qdrant/storage
+    labels:
+      shs.role: qdrant
+
+  automatic1111:
+    image: ghcr.io/sd-webui/stable-diffusion-webui:1.10.0
+    restart: unless-stopped
+    profiles:
+      - diffusion
+    ports:
+      - "${AUTOMATIC1111_PORT:-7860}:7860"
+    environment:
+      - COMMANDLINE_ARGS=${AUTOMATIC1111_ARGS:---listen --port 7860 --api --xformers --data-dir /data --ckpt-dir /data/Models --medvram --opt-sdp-attention}
+      - NVIDIA_VISIBLE_DEVICES=${AUTOMATIC1111_GPU_SELECTION:-all}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - ${AUTOMATIC1111_DATA_DIR:-../data/automatic1111}:/data
+      - ${AUTOMATIC1111_MODELS_DIR:-../models/stable-diffusion}:/data/Models
+      - ${AUTOMATIC1111_WORKSPACE:-../stablediff/stable-diffusion-webui}:/workspace/stable-diffusion-webui:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${AUTOMATIC1111_GPU_COUNT:-all}
+              capabilities: [gpu]
+    labels:
+      shs.role: stable-diffusion
+
+volumes: {}
