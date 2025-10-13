@@ -1,24 +1,22 @@
 # GPU Policy
 
-## Targets
-- Cap VRAM usage at ~80% per GPU.
-- Queue new heavy jobs whenever compute utilisation exceeds 50%.
-- Distribute workloads across both 12 GB GPUs.
+The repository captures desired GPU utilisation targets in configuration and Compose settings. Automation for dynamic scheduling has not yet been implemented, so operators enforce these limits manually.
 
-## Scheduler Mechanics
-- Poll GPU metrics via NVML (`GpuMetricsCollector`) every 5 seconds.
-- `GpuScheduler.AcquireAsync()` picks the least loaded GPU below the utilisation and memory thresholds; otherwise it queues the job.
-- Jobs release GPU slots on completion or timeout.
+## Configuration Targets
+- `ResourceScheduler:GpuUtilisationThreshold = 0.5`: preferred ceiling for sustained GPU utilisation.
+- `ResourceScheduler:GpuMemoryThreshold = 0.8`: desired VRAM cap per device.
+- `ResourceScheduler:PollIntervalSeconds = 5` / `QueueBackoffSeconds = 30`: placeholders that document the intended sampling and retry cadence (development overrides reduce these to `3` and `10`).
 
-## Service Limits
-- Ollama: `OLLAMA_MAX_GPU_MEMORY=0.8` plus model-specific limits.
-- Stable Diffusion: `--medvram`, `--opt-sdp-attention`, optional `--precision full` if required.
-- Additional services can override thresholds through configuration.
+## Container Parameters
+- Ollama: `OLLAMA_MAX_GPU_MEMORY` defaults to `0.8` in `docker/compose.yaml`, aligning with the VRAM target.
+- Stable Diffusion: the Compose command line includes `--medvram` and `--opt-sdp-attention` to control memory usage; additional arguments can be supplied via the `AUTOMATIC1111_ARGS` environment variable.
+- GPU access is enabled for Stable Diffusion through the `diffusion` profile (`deploy.resources.reservations.devices`).
 
-## Escalations
-- If queue length > 5 or wait time > 2 minutes, emit warnings (logs + events).
-- Operators can intervene with `docker compose stop automatic1111` or cancel queued jobs through the API.
+## Operational Guidance
+- Monitor real-time utilisation with `nvidia-smi` (WSL2 or host shell) or vendor dashboards.
+- Pause heavy jobs by stopping the Stable Diffusion container: `docker compose --profile diffusion stop automatic1111`.
+- Resume workloads once utilisation falls below the configured targets and restart containers with `docker compose up -d`.
 
-## Tests
-- Smoke tests simulate concurrent prompts to verify queue behaviour and the 80% guardrail.
-- Planned observability: expose Prometheus metrics for GPU utilisation and queue length.
+## Future Enhancements
+- Implement automated enforcement based on the recorded thresholds.
+- Surface telemetry and alerting (metrics/events) once scheduling logic is in place.

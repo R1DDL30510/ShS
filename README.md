@@ -18,7 +18,7 @@ Compose labels (`shs.role`) allow the worker to correlate running containers wit
 ## Key Capabilities
 - **Docker-aware orchestration** – Detects labelled containers via the Docker CLI, surfaces status telemetry, and gracefully handles CLI failures or cancellation.
 - **Configurable service endpoints** – Centralised options objects define base URLs, GPU thresholds, and health probes for Ollama, OpenWebUI, and Stable Diffusion services.
-- **GPU resource policy** – Tunable scheduler thresholds let operators gate heavy jobs when utilisation or memory exceeds defined limits.
+- **GPU policy configuration** – Resource scheduler thresholds are captured in configuration for future automation while operations teams continue to enforce limits manually.
 - **Operational guidance** – Runbooks document log locations, restart procedures, health checks, and escalation paths for production operations.
 
 ## Prerequisites
@@ -27,7 +27,7 @@ Compose labels (`shs.role`) allow the worker to correlate running containers wit
 - NVIDIA drivers plus `nvidia-smi` availability for GPU telemetry if Stable Diffusion or Ollama leverage GPU acceleration.
 
 ## Getting Started
-1. Clone the repository and ensure the `.env` file under `docker/` reflects host-specific paths and GPU settings.
+1. Clone the repository and create a `docker/.env` file (see `docker/compose.yaml` for supported overrides) so host-specific paths and GPU settings can be supplied.
 2. Build and start the stack:
    ```bash
    docker compose -f docker/compose.yaml up -d --build
@@ -46,7 +46,7 @@ Runtime settings live in `SecureHomeSystem/appsettings.json` and can be overridd
 - `Services`: Endpoint metadata for Ollama, OpenWebUI, and Stable Diffusion, including health check paths and GPU memory caps.
 - `ResourceScheduler`: GPU utilisation thresholds and polling cadence for future scheduling features.
 
-Refer to `docs/reference/configuration.md` for the full parameter reference and defaults.
+Refer to `docs/reference/configuration.md` for the full parameter reference and defaults, including the nested detection settings under `Docker:Detection` and service endpoint overrides.
 
 ## Operations
 - **Status checks:** `docker compose -f docker/compose.yaml ls` and `docker ps --filter label=shs.role` to confirm container health.
