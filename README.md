@@ -53,10 +53,12 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 - **Logs:** Use `docker compose logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
 - **Restarts:** Target a single service with `docker compose restart <service>` or recycle the full stack with `down`/`up -d`.
 - **GPU management:** Follow the GPU policy guidance to maintain VRAM caps and queue behaviour during contention.
+- **Release readiness:** Consult `docs/operations/release-day-playbook.md` for the day-of checklist, demo script, and revision
+  flags you should highlight to stakeholders.
 
 ## Development Workflow
 - Run the worker locally with `dotnet run --project SecureHomeSystem` to iterate without containers.
-- Execute unit or integration tests when they are introduced; **no automated test suite ships with the repository yet.**
+- Execute the detector unit tests with `dotnet test` to validate Docker parsing logic before release walk-throughs.
 - Container builds install the Docker CLI within the runtime image so the worker can communicate with the host daemon when deployed in Compose.
 
 ## Repository Structure

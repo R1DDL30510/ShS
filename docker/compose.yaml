@@ -1,6 +1,10 @@
+# Docker Compose definition for the SecureHomeSystem demo stack. Each service is
+# documented inline so future release rehearsals can trace environment variables,
+# volume mounts, and label usage without cross-referencing other files.
 name: shs-stack
 
 services:
+  # Background worker that inspects Docker labels and emits observability logs.
   shs-worker:
     build:
       context: ..
@@ -18,6 +22,7 @@ services:
     profiles:
       - worker
 
+  # OpenWebUI provides the chat interface for Ollama-hosted LLMs.
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.3.7
     restart: unless-stopped
@@ -32,6 +37,7 @@ services:
     labels:
       shs.role: open-webui
 
+  # Qdrant acts as the vector store backing OpenWebUI retrieval workflows.
   qdrant:
     image: qdrant/qdrant:v1.15.4
     restart: unless-stopped
@@ -42,6 +48,7 @@ services:
     labels:
       shs.role: qdrant
 
+  # AUTOMATIC1111 Stable Diffusion UI, activated via the optional diffusion profile.
   automatic1111:
     image: sdwebui/stable-diffusion-webui:latest
     restart: unless-stopped
@@ -74,4 +81,5 @@ services:
     labels:
       shs.role: stable-diffusion
 
+# No named volumes declared; services rely on bind mounts documented above.
 volumes: {}

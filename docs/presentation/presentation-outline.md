@@ -2,6 +2,9 @@
 
 Use this outline to produce a polished slide deck (≈15 slides) for stakeholders. Each slide lists narrative points, data sources, and a screenshot placeholder with guidance on what to capture from your environment.
 
+> 💼 **Release-Day Link:** Pair this outline with `docs/operations/release-day-playbook.md` so talking points, demo steps, and
+> revision flags stay synchronised between the slide deck and live presentation.
+
 ## Slide 1 – Title & Vision
 - Present the solution name: "SecureHomeSystem – AI-Assisted Home Orchestration".
 - Tagline: "Coordinating LLM and image workloads for home automation".
@@ -97,7 +100,7 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 ## Slide 14 – Risks, Flags & Follow-Up Actions
 - Present outstanding items to verify before publication:
   - Worker HTTP health probe missing (`README.md:89`, `docs/operations/runbook.md:19`).
-  - No automated tests (`README.md:90`).
+  - Automatisierte Tests decken derzeit nur Docker-Detection ab (`README.md`, `SecureHomeSystem.Tests`).
   - GPU policy automation pending (`README.md:91`, `docs/operations/gpu-policy.md:24`).
   - Windows Event Log forwarding undocumented (`docs/operations/runbook.md:9`).
   - GPU enforcement doc refresh needed (`docs/setup/docker-compose.md:27`).
