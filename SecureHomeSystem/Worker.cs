@@ -2,71 +2,70 @@ using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Services;
 
-namespace SecureHomeSystem
+namespace SecureHomeSystem;
+
+public class Worker : BackgroundService
 {
-    public class Worker : BackgroundService
+    private static readonly TimeSpan DetectionInterval = TimeSpan.FromSeconds(30);
+
+    private readonly ILogger<Worker> _logger;
+    private readonly IDockerServiceDetector _dockerServiceDetector;
+    private readonly ServiceEndpointsOptions _serviceEndpoints;
+
+    public Worker(
+        ILogger<Worker> logger,
+        IDockerServiceDetector dockerServiceDetector,
+        IOptions<ServiceEndpointsOptions> serviceEndpoints)
     {
-        private static readonly TimeSpan DetectionInterval = TimeSpan.FromSeconds(30);
+        _logger = logger;
+        _dockerServiceDetector = dockerServiceDetector;
+        _serviceEndpoints = serviceEndpoints.Value;
+    }
 
-        private readonly ILogger<Worker> _logger;
-        private readonly IDockerServiceDetector _dockerDetector;
-        private readonly ServiceEndpointsOptions _serviceEndpoints;
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            "SecureHomeSystem worker initialised. Ollama: {OllamaUrl}, OpenWebUI: {OpenWebUiUrl}, StableDiffusion: {StableDiffusionUrl}",
+            _serviceEndpoints.Ollama.BaseUrl,
+            _serviceEndpoints.OpenWebUi.BaseUrl,
+            _serviceEndpoints.StableDiffusion.BaseUrl);
 
-        public Worker(
-            ILogger<Worker> logger,
-            IDockerServiceDetector dockerDetector,
-            IOptions<ServiceEndpointsOptions> serviceEndpoints)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            _logger = logger;
-            _dockerDetector = dockerDetector;
-            _serviceEndpoints = serviceEndpoints.Value;
+            await DetectDockerServicesAsync(stoppingToken).ConfigureAwait(false);
+
+            try
+            {
+                await Task.Delay(DetectionInterval, stoppingToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+    }
+
+    private async Task DetectDockerServicesAsync(CancellationToken cancellationToken)
+    {
+        var services = await _dockerServiceDetector.DetectAsync(cancellationToken).ConfigureAwait(false);
+
+        if (services.Count == 0)
+        {
+            _logger.LogInformation("No managed docker services detected.");
+            return;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        foreach (var service in services)
         {
+            var shortId = service.ContainerId.Length > 12 ? service.ContainerId[..12] : service.ContainerId;
+
             _logger.LogInformation(
-                "Starting SecureHomeSystem worker targeting Ollama at {OllamaUrl}, OpenWebUI at {OpenWebUIUrl}, StableDiffusion at {StableDiffusionUrl}",
-                _serviceEndpoints.Ollama.Url,
-                _serviceEndpoints.OpenWebUI.Url,
-                _serviceEndpoints.StableDiffusion.Url);
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await DetectDockerServicesAsync(stoppingToken).ConfigureAwait(false);
-
-                try
-                {
-                    await Task.Delay(DetectionInterval, stoppingToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    break;
-                }
-            }
-        }
-
-        private async Task DetectDockerServicesAsync(CancellationToken cancellationToken)
-        {
-            var services = await _dockerDetector.DetectAsync(cancellationToken).ConfigureAwait(false);
-
-            if (services.Count == 0)
-            {
-                _logger.LogWarning("No shs.role containers detected");
-                return;
-            }
-
-            foreach (var service in services)
-            {
-                var shortId = service.ContainerId.Length > 12 ? service.ContainerId[..12] : service.ContainerId;
-
-                _logger.LogInformation(
-                    "Detected {Role} container {ContainerId} | running={Running} | endpoint={Endpoint} | health={Health}",
-                    service.Role,
-                    shortId,
-                    service.IsRunning,
-                    service.Address ?? "(none)",
-                    service.HealthStatus ?? "unknown");
-            }
+                "Detected service {ServiceName} | Container {ContainerId} | Image {Image} | Status {Status} | Running {IsRunning}",
+                service.Name,
+                shortId,
+                service.Image,
+                service.Status,
+                service.IsRunning);
         }
     }
 }

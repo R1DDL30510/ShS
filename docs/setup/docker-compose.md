@@ -1,35 +1,36 @@
 # Docker Compose Setup
 
-This repository ships with a Compose stack that bundles the SHS worker, Open WebUI, Qdrant, and the optional Automatic1111 Stable Diffusion runtime.
-
 ## Prerequisites
-- Docker Desktop 4.30+ with the NVIDIA container toolkit enabled.
-- NVIDIA drivers capable of exposing both GPUs to containers.
-- A copy of `docker/.env.example` duplicated as `docker/.env` with values adjusted to your environment.
+- Docker Desktop with WSL2 backend and NVIDIA Container Toolkit.
+- Latest NVIDIA driver exposing both 12 GB GPUs to Docker.
+- Ollama installed native on Windows and running as a service on port `11434`.
 
-## Usage
-1. Copy the environment template:
-   ```sh
-   cd docker
-   cp .env.example .env
-   ```
-2. Review ports, data directories, and GPU selections in `.env`. Paths default to `../data` and `../models` relative to the repository root.
-3. Launch the stack:
-   ```sh
-   docker compose -f docker/compose.yaml --profile worker up -d
-   ```
-4. Enable Stable Diffusion workloads by adding the `diffusion` profile:
-   ```sh
-   docker compose -f docker/compose.yaml --profile diffusion up -d
-   ```
-5. Stop services when finished:
-   ```sh
-   docker compose -f docker/compose.yaml down
-   ```
+## Schnellstart
+```powershell
+cd docker
+Copy-Item .env.example .env
+docker compose --profile worker up -d
+docker compose --profile diffusion up -d   # Stable Diffusion optional
+```
 
-## Service Notes
-- Ollama runs as a native Windows service and is not part of the Compose stack. `OLLAMA_BASE_URL` defaults to `http://host.docker.internal:11434`.
-- Open WebUI and Qdrant share the `DATA_DIR` volume; Automatic1111 uses dedicated volumes for checkpoints and generated assets.
-- Labels such as `shs.role=open-webui` are attached to each container and are consumed by the worker to detect running services.
+## Dienste & Profile
+- `shs-worker`: .NET Worker-Orchestrator (`worker` Profil).
+- `open-webui`, `qdrant`: Standardprofile, werden immer gestartet.
+- `automatic1111`: Nur mit Profil `diffusion`; GPU-Zugriff via `gpus: all`.
 
-Refer to `docs/reference/configuration.md` for the full set of environment variables and to `docs/operations/runbook.md` for operational procedures.
+## GPU Limits
+- Default `OLLAMA_MAX_GPU_MEMORY=0.8` (80% target load).
+- Stable Diffusion uses `--medvram` and `--opt-sdp-attention` to reduce VRAM pressure.
+- Worker scheduler queues heavy tasks whenever GPU utilisation exceeds 50%.
+
+## Volumes
+- Data root: `../data` relative to the repo (`open-webui`, `qdrant`, `automatic1111`).
+- Models: `../models/stable-diffusion` holds AUTOMATIC1111 checkpoints.
+- Workspace: `../stablediff/stable-diffusion-webui` mounted read-only for scripts.
+
+## Health Checks
+- Immediately after startup the worker runs smoke tests:
+  - OpenWebUI via `GET /api/system/info`
+  - Qdrant via `GET /readyz`
+  - AUTOMATIC1111 via a low-cost `/sdapi/v1/txt2img` request
+- Failures trigger automatic restart attempts and pause the job queue.

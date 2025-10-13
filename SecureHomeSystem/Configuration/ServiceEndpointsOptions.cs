@@ -1,25 +1,29 @@
-namespace SecureHomeSystem.Configuration
+namespace SecureHomeSystem.Configuration;
+
+public sealed class ServiceEndpointsOptions
 {
-    public sealed class ServiceEndpointsOptions
-    {
-        public ServiceEndpoint Ollama { get; set; } = new()
-        {
-            Url = "http://localhost:11434"
-        };
+    public OllamaOptions Ollama { get; set; } = new();
+    public OpenWebUiOptions OpenWebUi { get; set; } = new();
+    public StableDiffusionOptions StableDiffusion { get; set; } = new();
+}
 
-        public ServiceEndpoint OpenWebUI { get; set; } = new()
-        {
-            Url = "http://localhost:3000"
-        };
+public sealed class OllamaOptions
+{
+    public string BaseUrl { get; set; } = "http://host.docker.internal:11434";
+    public double MaxGpuMemoryFraction { get; set; } = 0.8;
+    public string HealthEndpoint { get; set; } = "/api/tags";
+}
 
-        public ServiceEndpoint StableDiffusion { get; set; } = new()
-        {
-            Url = "http://localhost:7860"
-        };
+public sealed class OpenWebUiOptions
+{
+    public string BaseUrl { get; set; } = "http://localhost:3000";
+    public bool RequireAuth { get; set; }
+    public string HealthEndpoint { get; set; } = "/api/system/info";
+}
 
-        public sealed class ServiceEndpoint
-        {
-            public string Url { get; set; } = string.Empty;
-        }
-    }
+public sealed class StableDiffusionOptions
+{
+    public string BaseUrl { get; set; } = "http://localhost:7860";
+    public string LaunchProfile { get; set; } = "diffusion";
+    public string SmokeTestPrompt { get; set; } = "test prompt";
 }

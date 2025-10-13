@@ -1,9 +1,8 @@
 using SecureHomeSystem.Models;
 
-namespace SecureHomeSystem.Services
+namespace SecureHomeSystem.Services;
+
+public interface IDockerServiceDetector
 {
-    public interface IDockerServiceDetector
-    {
-        Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken);
-    }
+    Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken);
 }

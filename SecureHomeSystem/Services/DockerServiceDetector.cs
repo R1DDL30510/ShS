@@ -1,123 +1,102 @@
-using Docker.DotNet;
-using Docker.DotNet.Models;
-using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Models;
 
-namespace SecureHomeSystem.Services
+namespace SecureHomeSystem.Services;
+
+public sealed class DockerServiceDetector : IDockerServiceDetector
 {
-    public sealed class DockerServiceDetector : IDockerServiceDetector, IAsyncDisposable
+    private readonly DockerOptions _options;
+    private readonly ILogger<DockerServiceDetector> _logger;
+
+    public DockerServiceDetector(IOptions<DockerOptions> options, ILogger<DockerServiceDetector> logger)
     {
-        private readonly DockerClient _client;
-        private readonly ILogger<DockerServiceDetector> _logger;
-        private readonly DockerOptions _options;
+        _options = options.Value;
+        _logger = logger;
+    }
 
-        public DockerServiceDetector(ILogger<DockerServiceDetector> logger, IOptions<DockerOptions> options)
+    public async Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken)
+    {
+        var detected = new List<DetectedService>();
+
+        var processStartInfo = new ProcessStartInfo
         {
-            _logger = logger;
-            _options = options.Value;
-            _client = CreateDockerClient();
-        }
+            FileName = "docker",
+            Arguments = "ps --format \"{{.ID}}||{{.Names}}||{{.Image}}||{{.Status}}||{{.Labels}}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
 
-        public async Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken)
+        try
         {
-            var labelFilters = new Dictionary<string, bool>
+            using var process = Process.Start(processStartInfo);
+            if (process is null)
             {
-                ["shs.role"] = true
-            };
-
-            if (!string.IsNullOrWhiteSpace(_options.ProjectName))
-            {
-                labelFilters[$"com.docker.compose.project={_options.ProjectName}"] = true;
+                _logger.LogWarning("Unable to start docker CLI process for service detection.");
+                return detected;
             }
 
-            var filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                ["label"] = labelFilters
-            };
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
 
-            IList<ContainerListResponse> containers;
+            await process.WaitForExitAsync(cancellationToken);
+            var stdout = await stdoutTask;
+            var stderr = await stderrTask;
 
-            try
+            if (process.ExitCode != 0)
             {
-                containers = await _client.Containers.ListContainersAsync(new ListContainersParameters
-                {
-                    All = true,
-                    Filters = filters
-                }, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to query Docker for shs.role containers");
-                return Array.Empty<DetectedService>();
+                _logger.LogWarning("Docker CLI returned non-zero exit code {ExitCode}. stderr: {StdErr}", process.ExitCode, stderr);
+                return detected;
             }
 
-            var discovered = new List<DetectedService>(containers.Count);
+            var selectorMap = _options.Detection.LabelSelector;
 
-            foreach (var container in containers)
+            foreach (var line in stdout.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
-                if (!container.Labels.TryGetValue("shs.role", out var role))
+                var tokens = line.Split("||", StringSplitOptions.None);
+                if (tokens.Length < 5)
                 {
                     continue;
                 }
 
-                _logger.LogDebug("Discovered container {ContainerId} for role {Role} with status {Status}", container.ID, role, container.Status);
+                var labels = tokens[4]
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(label => label.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                var endpoint = ResolveEndpoint(container);
-
-                discovered.Add(new DetectedService
+                foreach (var kvp in selectorMap)
                 {
-                    Role = role,
-                    ContainerId = container.ID,
-                    Image = container.Image,
-                    IsRunning = string.Equals(container.State, "running", StringComparison.OrdinalIgnoreCase),
-                    Address = endpoint,
-                    HealthStatus = container.Health?.Status
-                });
-            }
+                    if (!labels.Contains(kvp.Value))
+                    {
+                        continue;
+                    }
 
-            return discovered;
-        }
+                    detected.Add(new DetectedService
+                    {
+                        Name = kvp.Key,
+                        ContainerId = tokens[0],
+                        Image = tokens[2],
+                        Status = tokens[3],
+                        IsRunning = tokens[3].Contains("Up", StringComparison.OrdinalIgnoreCase)
+                    });
 
-        public ValueTask DisposeAsync()
-        {
-            _client.Dispose();
-            return ValueTask.CompletedTask;
-        }
-
-        private static DockerClient CreateDockerClient()
-        {
-            // Prefer environment variables (e.g., DOCKER_HOST) but fall back to the local engine.
-            if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DOCKER_HOST")))
-            {
-                return new DockerClientConfiguration().CreateClient();
-            }
-
-            if (OperatingSystem.IsWindows())
-            {
-                return new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine")).CreateClient();
-            }
-
-            return new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
-        }
-
-        private static string? ResolveEndpoint(ContainerListResponse container)
-        {
-            foreach (var port in container.Ports)
-            {
-                if (port.PublicPort == 0)
-                {
-                    continue;
+                    break;
                 }
-
-                var host = string.IsNullOrWhiteSpace(port.IP) || port.IP == "0.0.0.0" ? "localhost" : port.IP;
-                var scheme = port.Type == "tcp" ? "http" : port.Type;
-
-                return $"{scheme}://{host}:{port.PublicPort}";
             }
-
-            return null;
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Docker service detection cancelled.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to detect docker services.");
+        }
+
+        return detected;
     }
 }

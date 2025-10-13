@@ -1,11 +1,9 @@
-namespace SecureHomeSystem.Configuration
+namespace SecureHomeSystem.Configuration;
+
+public sealed class ResourceSchedulerOptions
 {
-    public sealed class ResourceSchedulerOptions
-    {
-        public int GpuUtilisationThreshold { get; set; } = 50;
-
-        public int MemoryHeadroom { get; set; } = 20;
-
-        public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(10);
-    }
+    public double GpuUtilisationThreshold { get; set; } = 0.5;
+    public double GpuMemoryThreshold { get; set; } = 0.8;
+    public int PollIntervalSeconds { get; set; } = 5;
+    public int QueueBackoffSeconds { get; set; } = 30;
 }
