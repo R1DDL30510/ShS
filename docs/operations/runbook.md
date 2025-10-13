@@ -13,7 +13,7 @@
 ## Restart Policy
 - Restart a single service: `docker compose -f docker/compose.yaml restart <service>`.
 - Recycle the full stack: `docker compose -f docker/compose.yaml down` followed by `up -d`.
-- GPU pressure: Worker pauses new jobs; optionally free capacity with `docker compose stop automatic1111`.
+- GPU pressure: Pause heavy jobs by stopping the Stable Diffusion container (`docker compose stop automatic1111`); the worker registers configured limits but does not enforce them.
 
 ## Health Checks
 - Worker endpoint (planned): `http://localhost:5169/health`.
