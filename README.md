@@ -1,94 +1,92 @@
-# SecureHomeSystem Stack
+# SecureHomeSystem-Stack
 
-## Overview
-SecureHomeSystem is a .NET 9 worker service that supervises an AI-assisted home automation stack. The worker loads runtime settings from `appsettings.json`, registers Docker and service endpoint options, and runs a hosted background service for continuous orchestration tasks. The `Worker` service logs configured endpoints, repeatedly triggers Docker discovery, and reports the status of managed containers every 30 seconds.
+## Überblick
+SecureHomeSystem ist ein .NET-9-Worker-Dienst, der einen KI-gestützten Home-Automation-Stack überwacht. Der Worker lädt Laufzeiteinstellungen aus `appsettings.json`, registriert Docker- und Serviceendpunkt-Optionen und führt einen gehosteten Background Service für kontinuierliche Orchestrierungsaufgaben aus. Der `Worker`-Dienst protokolliert konfigurierte Endpunkte, stößt wiederholt die Docker-Erkennung an und meldet alle 30 Sekunden den Status der verwalteten Container.
 
-## Stack Architecture
-The project combines a lightweight orchestration worker with a Docker Compose workload containing generative AI tooling and supporting services:
+## Stack-Architektur
+Das Projekt kombiniert einen schlanken Orchestrierungs-Worker mit einer Docker-Compose-Workload, die generative KI-Werkzeuge und unterstützende Dienste enthält:
 
-| Component | Description |
+| Komponente | Beschreibung |
 | --- | --- |
-| `shs-worker` | Containerised build of the .NET worker with access to the host Docker socket for runtime detection and orchestration. |
-| `open-webui` | OpenWebUI front-end for Ollama, configured through environment variables and labelled for detection by the worker. |
-| `qdrant` | Vector database used by OpenWebUI for retrieval-augmented workflows. |
-| `automatic1111` | Stable Diffusion web UI container with GPU reservations, model mounts, and startup patching for compatibility tweaks. |
+| `shs-worker` | Containerisierter Build des .NET-Workers mit Zugriff auf den Docker-Socket des Hosts für Laufzeiterkennung und Orchestrierung. |
+| `open-webui` | OpenWebUI-Front-End für Ollama, konfiguriert über Umgebungsvariablen und mit Labels versehen, damit der Worker es erkennt. |
+| `qdrant` | Vektordatenbank, die von OpenWebUI für Retrieval-Augmented Workflows verwendet wird. |
+| `automatic1111` | Stable-Diffusion-Web-UI-Container mit GPU-Reservierungen, Modell-Mounts und Startpatching für Kompatibilitätsanpassungen. |
 
-Compose labels (`shs.role`) allow the worker to correlate running containers with logical services when parsing `docker ps` output.
+Compose-Labels (`shs.role`) ermöglichen es dem Worker, beim Parsen der `docker ps`-Ausgabe laufende Container logischen Diensten zuzuordnen.
 
-## Key Capabilities
-- **Docker-aware orchestration** – Detects labelled containers via the Docker CLI, surfaces status telemetry, and gracefully handles CLI failures or cancellation.
-- **Configurable service endpoints** – Centralised options objects define base URLs, GPU thresholds, and health probes for Ollama, OpenWebUI, and Stable Diffusion services.
-- **GPU policy configuration** – Resource scheduler thresholds are captured in configuration for future automation while operations teams continue to enforce limits manually.
-- **Operational guidance** – Runbooks document log locations, restart procedures, health checks, and escalation paths for production operations.
+## Zentrale Funktionen
+- **Docker-bewusste Orchestrierung** – Erkennt gelabelte Container über die Docker-CLI, stellt Status-Telemetrie bereit und geht sanft mit CLI-Fehlern oder Abbrüchen um.
+- **Konfigurierbare Serviceendpunkte** – Zentralisierte Optionsobjekte definieren Basis-URLs, GPU-Schwellenwerte und Health Checks für Ollama-, OpenWebUI- und Stable-Diffusion-Dienste.
+- **GPU-Richtlinienkonfiguration** – Ressourcenscheduler-Schwellen werden in der Konfiguration erfasst, um zukünftige Automatisierung zu ermöglichen, während Betriebsteams die Limits weiterhin manuell durchsetzen.
+- **Betriebliche Anleitung** – Runbooks dokumentieren Protokollpfade, Neustartverfahren, Health Checks und Eskalationspfade für den Produktivbetrieb.
 
-## Prerequisites
-- [.NET SDK 9.0](https://dotnet.microsoft.com/) for local builds of the worker service.
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) with Compose V2 and GPU passthrough (NVIDIA) enabled.
-- NVIDIA drivers plus `nvidia-smi` availability for GPU telemetry if Stable Diffusion or Ollama leverage GPU acceleration.
+## Voraussetzungen
+- [.NET SDK 9.0](https://dotnet.microsoft.com/) für lokale Builds des Worker-Dienstes.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) mit Compose V2 und aktiviertem GPU-Passthrough (NVIDIA).
+- NVIDIA-Treiber sowie `nvidia-smi`-Verfügbarkeit für GPU-Telemetrie, wenn Stable Diffusion oder Ollama GPU-Beschleunigung nutzen.
 
-## Getting Started
-1. Clone the repository and create a `docker/.env` file (see `docker/compose.yaml` for supported overrides) so host-specific paths and GPU settings can be supplied.
-2. Build and start the stack:
+## Erste Schritte
+1. Repository klonen und eine Datei `docker/.env` erstellen (unterstützte Overrides siehe `docker/compose.yaml`), damit host-spezifische Pfade und GPU-Einstellungen bereitgestellt werden können.
+2. Stack bauen und starten:
    ```bash
    docker compose -f docker/compose.yaml up -d --build
    ```
-3. Follow logs for initial detection:
+3. Logs für die erste Erkennung verfolgen:
    ```bash
    docker compose -f docker/compose.yaml logs -f shs-worker
    ```
-4. Access OpenWebUI at `http://localhost:3003` (unless overridden) and verify Stable Diffusion readiness at `http://localhost:7860`.
+4. OpenWebUI unter `http://localhost:3003` aufrufen (sofern nicht überschrieben) und die Einsatzbereitschaft von Stable Diffusion unter `http://localhost:7860` prüfen.
 
-The worker reports each detected service with its container ID, image, status, and running flag, providing quick validation of stack health.
+Der Worker meldet jeden erkannten Dienst mit Container-ID, Image, Status und Running-Flag, was eine schnelle Validierung der Stack-Gesundheit ermöglicht.
 
-## Configuration
-Runtime settings live in `SecureHomeSystem/appsettings.json` and can be overridden via environment variables when containerised. Key sections include:
-- `Docker`: Compose file path, project name, auto-start profiles, and detection label selectors.
-- `Services`: Endpoint metadata for Ollama, OpenWebUI, and Stable Diffusion, including health check paths and GPU memory caps.
-- `ResourceScheduler`: GPU utilisation thresholds and polling cadence for future scheduling features.
+## Konfiguration
+Laufzeiteinstellungen befinden sich in `SecureHomeSystem/appsettings.json` und können beim Betrieb im Container über Umgebungsvariablen überschrieben werden. Wichtige Abschnitte sind:
+- `Docker`: Compose-Dateipfad, Projektname, Auto-Start-Profile und Auswahlkriterien für die Erkennung.
+- `Services`: Endpunkt-Metadaten für Ollama, OpenWebUI und Stable Diffusion, einschließlich Health-Check-Pfaden und GPU-Speicherlimits.
+- `ResourceScheduler`: GPU-Auslastungsschwellen und Polling-Frequenz für zukünftige Scheduling-Funktionen.
 
-Refer to `docs/reference/configuration.md` for the full parameter reference and defaults, including the nested detection settings under `Docker:Detection` and service endpoint overrides.
+Siehe `docs/reference/configuration.md` für die vollständige Parameterreferenz und Standardwerte, einschließlich der verschachtelten Erkennungseinstellungen unter `Docker:Detection` und Service-Endpunkt-Overrides.
 
-## Operations
-- **Status checks:** `docker compose -f docker/compose.yaml ls` and `docker ps --filter label=shs.role` to confirm container health.
-- **Logs:** Use `docker compose logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
-- **Restarts:** Target a single service with `docker compose restart <service>` or recycle the full stack with `down`/`up -d`.
-- **GPU management:** Follow the GPU policy guidance to maintain VRAM caps and queue behaviour during contention.
-- **Release readiness:** Consult `docs/operations/release-day-playbook.md` for the day-of checklist, demo script, and revision
-  flags you should highlight to stakeholders.
+## Betrieb
+- **Statusprüfungen:** `docker compose -f docker/compose.yaml ls` und `docker ps --filter label=shs.role`, um die Container-Gesundheit zu bestätigen.
+- **Logs:** Verwenden Sie `docker compose logs shs-worker` oder dienstspezifische `docker logs`-Befehle zur Fehlersuche.
+- **Neustarts:** Einzelnen Dienst mit `docker compose restart <service>` gezielt neu starten oder den gesamten Stack mit `down`/`up -d` recyceln.
+- **GPU-Verwaltung:** Folgen Sie der GPU-Richtlinie, um VRAM-Limits und Queue-Verhalten bei Engpässen einzuhalten.
+- **Release-Bereitschaft:** Konsultieren Sie `docs/operations/release-day-playbook.md` für die Checkliste am Tag der Veröffentlichung, das Demo-Skript und relevante Revisionshinweise für Stakeholder.
 
-## Development Workflow
-- Run the worker locally with `dotnet run --project SecureHomeSystem` to iterate without containers.
-- Execute unit or integration tests when they are introduced; **no automated test suite ships with the repository yet.**
-- Container builds install the Docker CLI within the runtime image so the worker can communicate with the host daemon when deployed in Compose.
+## Entwicklungs-Workflow
+- Führen Sie den Worker lokal mit `dotnet run --project SecureHomeSystem` aus, um ohne Container zu iterieren.
+- Führen Sie Unit- oder Integrationstests aus, sobald sie eingeführt werden; **aktuell wird kein automatisiertes Test-Suite mitgeliefert.**
+- Container-Builds installieren die Docker-CLI im Runtime-Image, sodass der Worker beim Einsatz in Compose mit dem Host-Daemon kommunizieren kann.
 
-## Repository Structure
+## Repository-Struktur
 ```
-SecureHomeSystem/      # .NET worker service source, options, and hosted worker
-  Configuration/      # Strongly typed options for Docker, services, and scheduling
-  Services/           # Docker detection abstraction and implementation
-  Models/             # Data contracts for detected services
-  Dockerfile          # Multi-stage build for the worker container
-  appsettings.json    # Default runtime configuration
+SecureHomeSystem/      # Quellcode, Optionsklassen und gehosteter Worker des .NET-Workers
+  Configuration/      # Stark typisierte Optionen für Docker, Dienste und Scheduling
+  Services/           # Abstraktion und Implementierung der Docker-Erkennung
+  Models/             # Datenverträge für erkannte Dienste
+  Dockerfile          # Multi-Stage-Build für das Worker-Container-Image
+  appsettings.json    # Standard-Laufzeitkonfiguration
 
-docker/               # Compose stack definition and auxiliary scripts
+docker/               # Compose-Stack-Definition und Hilfsskripte
   compose.yaml
   automatic1111_patch.py
 
-docs/                 # Operational and configuration references
+docs/                 # Betriebs- und Konfigurationsreferenzen
   reference/
   operations/
   setup/
 ```
 
-## Support and Contribution
-Operational issues and feature proposals should be tracked via the repository issue tracker. When contributing code:
-1. Fork the repository and create a feature branch.
-2. Adhere to .NET coding conventions and ensure new services include Docker labels for detection.
-3. Provide documentation updates (runbook or configuration reference) alongside feature changes.
-4. Open a pull request with context, testing evidence, and rollback considerations.
+## Support und Beitrag
+Betriebliche Themen und Funktionsvorschläge sollten über den Issue-Tracker des Repositories verfolgt werden. Beim Beitragen von Code:
+1. Forken Sie das Repository und erstellen Sie einen Feature-Branch.
+2. Halten Sie sich an die .NET-Coding-Conventions und stellen Sie sicher, dass neue Dienste Docker-Labels zur Erkennung enthalten.
+3. Liefern Sie Dokumentations-Updates (Runbook oder Konfigurationsreferenz) zusammen mit Funktionsänderungen.
+4. Öffnen Sie einen Pull Request mit Kontext, Testnachweisen und Überlegungen zum Rollback.
 
-## Revision Flags
-- ⚠️ **Worker health endpoint** – The worker currently has no HTTP health probe; update documentation once an endpoint is implemented.
-- ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
-- ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
-
+## Revisionshinweise
+- ⚠️ **Worker-Health-Endpunkt** – Der Worker besitzt derzeit keinen HTTP-Health-Check; aktualisieren Sie die Dokumentation, sobald ein Endpunkt implementiert ist.
+- ⚠️ **Automatisiertes Testing** – Es existieren keine Unit- oder Integrationstests. Fügen Sie Abdeckung hinzu oder aktualisieren Sie die Workflow-Anleitung, sobald Tests verfügbar sind.
+- ⚠️ **GPU-Richtlinienautomatisierung** – Ressourcengrenzen sind derzeit nur empfehlend. Aktualisieren Sie die GPU-Richtliniendokumente, sobald Durchsetzungslogik bereitsteht.

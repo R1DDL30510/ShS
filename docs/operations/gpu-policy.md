@@ -1,24 +1,24 @@
-# GPU Policy
+# GPU-Richtlinie
 
-The repository captures desired GPU utilisation targets in configuration and Compose settings. Automation for dynamic scheduling has not yet been implemented, so operators enforce these limits manually.
+Dieses Repository hält gewünschte GPU-Auslastungsziele in der Konfiguration und in den Compose-Einstellungen fest. Automatisierung für dynamisches Scheduling wurde noch nicht umgesetzt, daher setzen Operator:innen diese Limits derzeit manuell durch.
 
-## Configuration Targets
-- `ResourceScheduler:GpuUtilisationThreshold = 0.5`: preferred ceiling for sustained GPU utilisation.
-- `ResourceScheduler:GpuMemoryThreshold = 0.8`: desired VRAM cap per device.
-- `ResourceScheduler:PollIntervalSeconds = 5` / `QueueBackoffSeconds = 30`: placeholders that document the intended sampling and retry cadence (development overrides reduce these to `3` and `10`).
+## Konfigurationsziele
+- `ResourceScheduler:GpuUtilisationThreshold = 0.5`: bevorzugte Obergrenze für anhaltende GPU-Auslastung.
+- `ResourceScheduler:GpuMemoryThreshold = 0.8`: gewünschtes VRAM-Limit pro Gerät.
+- `ResourceScheduler:PollIntervalSeconds = 5` / `QueueBackoffSeconds = 30`: Platzhalter, die die geplante Abtast- und Retry-Frequenz dokumentieren (Entwicklungs-Overrides reduzieren auf `3` bzw. `10`).
 
-## Container Parameters
-- Ollama: `OLLAMA_MAX_GPU_MEMORY` defaults to `0.8` in `docker/compose.yaml`, aligning with the VRAM target.
-- Stable Diffusion: the Compose command line includes `--medvram` and `--opt-sdp-attention` to control memory usage; additional arguments can be supplied via the `AUTOMATIC1111_ARGS` environment variable.
-- GPU access is enabled for Stable Diffusion through the `diffusion` profile (`deploy.resources.reservations.devices`).
+## Container-Parameter
+- Ollama: `OLLAMA_MAX_GPU_MEMORY` ist in `docker/compose.yaml` standardmäßig auf `0.8` gesetzt und entspricht dem VRAM-Ziel.
+- Stable Diffusion: Die Compose-Startparameter enthalten `--medvram` und `--opt-sdp-attention`, um den Speicherverbrauch zu steuern; zusätzliche Argumente können über die Umgebungsvariable `AUTOMATIC1111_ARGS` übergeben werden.
+- GPU-Zugriff wird für Stable Diffusion über das Profil `diffusion` aktiviert (`deploy.resources.reservations.devices`).
 
-## Operational Guidance
-- Monitor real-time utilisation with `nvidia-smi` (WSL2 or host shell) or vendor dashboards.
-- Pause heavy jobs by stopping the Stable Diffusion container: `docker compose --profile diffusion stop automatic1111`.
-- Resume workloads once utilisation falls below the configured targets and restart containers with `docker compose up -d`.
+## Operative Leitplanken
+- Beobachten Sie die Auslastung in Echtzeit mit `nvidia-smi` (WSL2 oder Host-Shell) oder über herstellerspezifische Dashboards.
+- Pausieren Sie rechenintensive Jobs, indem Sie den Stable-Diffusion-Container stoppen: `docker compose --profile diffusion stop automatic1111`.
+- Nehmen Sie Workloads wieder auf, sobald die Auslastung unter die konfigurierten Zielwerte fällt, und starten Sie Container mit `docker compose up -d` neu.
 
-## Future Enhancements
-- Implement automated enforcement based on the recorded thresholds.
-- Surface telemetry and alerting (metrics/events) once scheduling logic is in place.
+## Zukünftige Erweiterungen
+- Automatisierte Durchsetzung auf Basis der hinterlegten Schwellen implementieren.
+- Telemetrie und Alarmierung (Metriken/Ereignisse) bereitstellen, sobald Scheduling-Logik vorhanden ist.
 
-> ⚠️ **Revision Flag:** Refresh this policy once scheduling automation or telemetry features are delivered.
+> ⚠️ **Revisionshinweis:** Aktualisieren Sie diese Richtlinie, sobald Scheduling-Automatisierung oder Telemetrie-Features ausgeliefert werden.
