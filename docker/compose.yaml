@@ -34,6 +34,8 @@ services:
     ports:
       - "${WEBUI_PORT:-3003}:8080"
     environment:
+      - WEBUI_NAME=SecureHomeGPT
+      - ENABLE_PERSISTENT_CONFIG=False
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - WEBUI_AUTH=true
       - OLLAMA_MAX_GPU_MEMORY=${OLLAMA_MAX_GPU_MEMORY:-0.8}
