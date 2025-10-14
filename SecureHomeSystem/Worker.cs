@@ -69,6 +69,9 @@ public class Worker : BackgroundService
     /// production-like environments.
     /// </summary>
     /// <param name="cancellationToken">Token used to abort detection when the host shuts down.</param>
+    internal Task DetectOnceAsync(CancellationToken cancellationToken)
+        => DetectDockerServicesAsync(cancellationToken);
+
     private async Task DetectDockerServicesAsync(CancellationToken cancellationToken)
     {
         var services = await _dockerServiceDetector.DetectAsync(cancellationToken).ConfigureAwait(false);

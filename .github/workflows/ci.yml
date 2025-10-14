@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_smoke:
+        description: 'Run Docker smoke tests (requires Docker on runner)'
+        required: false
+        default: 'false'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore ShS.slnx
+
+      - name: Lint
+        run: dotnet format ShS.slnx --verify-no-changes
+
+      - name: Build
+        run: dotnet build ShS.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ShS.slnx --configuration Release --no-build --collect "XPlat Code Coverage"
+
+  smoke:
+    if: ${{ github.event.inputs.run_smoke == 'true' }}
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Ensure Docker is available
+        run: docker version
+
+      - name: Run smoke tests
+        shell: pwsh
+        run: ./scripts/smoke.ps1 -SkipTeardown

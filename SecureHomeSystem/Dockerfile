@@ -1,7 +1,7 @@
 # См. статью по ссылке https://aka.ms/customizecontainer, чтобы узнать как настроить контейнер отладки и как Visual Studio использует этот Dockerfile для создания образов для ускорения отладки.
 
 # Этот этап используется при запуске из VS в быстром режиме (по умолчанию для конфигурации отладки)
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 
 # Install Docker CLI so the worker can query the host daemon when containerised
@@ -34,4 +34,6 @@ RUN dotnet publish "./SecureHomeSystem.csproj" -c $BUILD_CONFIGURATION -o /app/p
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+ENV ASPNETCORE_URLS=http://0.0.0.0:5080
+EXPOSE 5080
 ENTRYPOINT ["dotnet", "SecureHomeSystem.dll"]
