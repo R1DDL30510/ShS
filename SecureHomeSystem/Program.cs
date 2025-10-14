@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using SecureHomeSystem.Configuration;
+using SecureHomeSystem.Infrastructure;
 using SecureHomeSystem.Services;
 using Serilog;
 
@@ -52,6 +53,7 @@ public static class Program
             .AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy());
 
+        builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
         builder.Services.AddSingleton<IDockerServiceDetector, DockerServiceDetector>();
         builder.Services.AddHostedService<Worker>();
 

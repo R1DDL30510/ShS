@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -8,6 +7,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
+using SecureHomeSystem.Infrastructure;
 using SecureHomeSystem.Models;
 
 namespace SecureHomeSystem.Services;
@@ -26,6 +26,7 @@ public sealed class ContainerLogCollector : BackgroundService
 
     private readonly ILogger<ContainerLogCollector> _logger;
     private readonly IDockerServiceDetector _dockerServiceDetector;
+    private readonly IProcessRunner _processRunner;
     private readonly LogCollectorOptions _collectorOptions;
     private readonly LogStorageOptions _storageOptions;
     private readonly LogRotationOptions _rotationOptions;
@@ -37,11 +38,13 @@ public sealed class ContainerLogCollector : BackgroundService
     public ContainerLogCollector(
         ILogger<ContainerLogCollector> logger,
         IDockerServiceDetector dockerServiceDetector,
+        IProcessRunner processRunner,
         IOptions<LogCollectorOptions> collectorOptions,
         IOptions<LogStorageOptions> storageOptions)
     {
         _logger = logger;
         _dockerServiceDetector = dockerServiceDetector;
+        _processRunner = processRunner;
         _collectorOptions = collectorOptions.Value;
         _storageOptions = storageOptions.Value;
         _rotationOptions = _collectorOptions.Rotation ?? new();
@@ -113,52 +116,49 @@ public sealed class ContainerLogCollector : BackgroundService
         }
     }
 
+    internal Task RunOnceAsync(CancellationToken cancellationToken)
+    {
+        if (!_collectorOptions.Enabled)
+        {
+            _logger.LogInformation("Container log collector disabled via configuration.");
+            return Task.CompletedTask;
+        }
+
+        Directory.CreateDirectory(_servicesDirectory);
+        Directory.CreateDirectory(_stateDirectory);
+
+        return CollectLogsAsync(cancellationToken);
+    }
+
     private async Task CollectLogsForServiceAsync(DetectedService service, CancellationToken cancellationToken)
     {
         var cursorPath = Path.Combine(_stateDirectory, $"{service.Name}.cursor");
         var lastCursor = await ReadCursorAsync(cursorPath, cancellationToken).ConfigureAwait(false);
         var since = CalculateSince(lastCursor);
 
-        var processStartInfo = new ProcessStartInfo
+        var invocation = new ProcessInvocation(
+            "docker",
+            $"logs --since \"{since:O}\" --timestamps {service.ContainerId}")
         {
-            FileName = "docker",
-            Arguments = $"logs --since \"{since:O}\" --timestamps {service.ContainerId}",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
             StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-            UseShellExecute = false,
-            CreateNoWindow = true
+            StandardErrorEncoding = Encoding.UTF8
         };
 
         try
         {
-            using var process = Process.Start(processStartInfo);
-            if (process is null)
-            {
-                _logger.LogWarning("Could not start docker logs process for service {Service}.", service.Name);
-                return;
-            }
+            var result = await _processRunner.RunAsync(invocation, cancellationToken).ConfigureAwait(false);
 
-            var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
-
-            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-
-            var stdout = await stdoutTask.ConfigureAwait(false);
-            var stderr = await stderrTask.ConfigureAwait(false);
-
-            if (process.ExitCode != 0)
+            if (!result.IsSuccess)
             {
                 _logger.LogWarning(
                     "docker logs returned exit code {ExitCode} for service {Service}. stderr: {StdErr}",
-                    process.ExitCode,
+                    result.ExitCode,
                     service.Name,
-                    stderr.Trim());
+                    string.IsNullOrWhiteSpace(result.StandardError) ? "(empty)" : result.StandardError.Trim());
             }
             else
             {
-                var writeResult = await PersistLogLinesAsync(service, stdout, lastCursor, cancellationToken).ConfigureAwait(false);
+                var writeResult = await PersistLogLinesAsync(service, result.StandardOutput, lastCursor, cancellationToken).ConfigureAwait(false);
                 if (writeResult.LastCursor.HasValue)
                 {
                     lastCursor = writeResult.LastCursor.Value;

@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
+using SecureHomeSystem.Infrastructure;
 using SecureHomeSystem.Models;
 
 namespace SecureHomeSystem.Services;
@@ -10,16 +10,21 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
 {
     private readonly DockerOptions _options;
     private readonly ILogger<DockerServiceDetector> _logger;
+    private readonly IProcessRunner _processRunner;
 
     /// <summary>
     /// Binds configuration and logger dependencies for the detector. All constructor
     /// parameters are resolved by the hosting container; no additional setup is required
     /// when the worker is run via <c>docker compose</c>.
     /// </summary>
-    public DockerServiceDetector(IOptions<DockerOptions> options, ILogger<DockerServiceDetector> logger)
+    public DockerServiceDetector(
+        IOptions<DockerOptions> options,
+        ILogger<DockerServiceDetector> logger,
+        IProcessRunner processRunner)
     {
         _options = options.Value;
         _logger = logger;
+        _processRunner = processRunner;
     }
 
     /// <summary>
@@ -31,41 +36,29 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
     {
         var detected = new List<DetectedService>();
 
-        var processStartInfo = new ProcessStartInfo
-        {
-            FileName = "docker",
-            Arguments = "ps --format \"{{.ID}}||{{.Names}}||{{.Image}}||{{.Status}}||{{.Labels}}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
         try
         {
-            using var process = Process.Start(processStartInfo);
-            if (process is null)
+            var invocation = new ProcessInvocation(
+                "docker",
+                "ps --format \"{{.ID}}||{{.Names}}||{{.Image}}||{{.Status}}||{{.Labels}}\"");
+
+            var result = await _processRunner.RunAsync(invocation, cancellationToken).ConfigureAwait(false);
+
+            if (!result.IsSuccess)
             {
-                _logger.LogWarning("Unable to start docker CLI process for service detection.");
-                return detected;
-            }
-
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync(cancellationToken);
-            var stdout = await stdoutTask;
-            var stderr = await stderrTask;
-
-            if (process.ExitCode != 0)
-            {
-                _logger.LogWarning("Docker CLI returned non-zero exit code {ExitCode}. stderr: {StdErr}", process.ExitCode, stderr);
+                var stderrMessage = string.IsNullOrWhiteSpace(result.StandardError)
+                    ? "(empty)"
+                    : result.StandardError.Trim();
+                _logger.LogWarning(
+                    "Docker CLI returned non-zero exit code {ExitCode}. stderr: {StdErr}",
+                    result.ExitCode,
+                    stderrMessage);
                 return detected;
             }
 
             var selectorMap = _options.Detection.LabelSelector;
 
-            foreach (var line in stdout.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var line in result.StandardOutput.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 var tokens = line.Split("||", StringSplitOptions.None);
                 if (tokens.Length < 5)

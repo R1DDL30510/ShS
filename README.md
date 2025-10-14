@@ -68,8 +68,14 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 
 ## Development Workflow
 - Run the worker locally with `dotnet run --project SecureHomeSystem` to iterate without containers.
-- Execute unit or integration tests when they are introduced; **no automated test suite ships with the repository yet.**
+- Execute the automated tests via `pwsh ./scripts/build.ps1` (restore → format → build → test) or target a specific category with `dotnet test ShS.slnx --filter "Category=Unit"`.
 - Container builds install the Docker CLI within the runtime image so the worker can communicate with the host daemon when deployed in Compose.
+
+## Testing & Continuous Integration
+- Tests live in `tests/SecureHomeSystem.Tests` using xUnit 3 + FluentAssertions with `Unit`, `Integration`, and future `Smoke` traits (see `docs/TESTING.md`).
+- `scripts/build.ps1` enforces restore → format → build → test; pass `-SkipFormat` while iterating to avoid formatting checks.
+- `scripts/smoke.ps1` provisions the Compose stack and runs smoke-tagged tests when Docker is available.
+- GitHub Actions workflow `.github/workflows/ci.yml` runs build/test on Windows and Linux; trigger manually with `run_smoke=true` to include dockerised smoke checks.
 
 ## Repository Structure
 ```
@@ -88,6 +94,10 @@ docs/                 # Operational and configuration references
   reference/
   operations/
   setup/
+
+tests/                # xUnit 3 test project with unit & integration coverage
+scripts/              # build.ps1 (lint/build/test) & smoke.ps1 (docker-compose smoke tests)
+.github/workflows/    # GitHub Actions CI pipeline definition
 ```
 
 ## Support and Contribution
@@ -98,6 +108,9 @@ Operational issues and feature proposals should be tracked via the repository is
 4. Open a pull request with context, testing evidence, and rollback considerations.
 
 ## Revision Flags
-- ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
+- ✅ **Automated testing** – Foundational unit/integration coverage and CI now exist. Extend into Docker-based smoke pipelines once runners support Compose workloads.
 - ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
 - ?? **Log analytics** - Logs now persist under  `/logs`, but no indexing or alerting layer consumes them yet. Revisit once a Loki/Elastic/Promtail integration is prioritised. 
+
+
+
