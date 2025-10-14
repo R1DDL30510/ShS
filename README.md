@@ -9,15 +9,15 @@ Das Projekt kombiniert einen schlanken Orchestrierungs-Worker mit einer Docker-C
 | Komponente | Beschreibung |
 | --- | --- |
 | `shs-worker` | Containerisierter Build des .NET-Workers mit Zugriff auf den Docker-Socket des Hosts für Laufzeiterkennung und Orchestrierung. |
-| `open-webui` | OpenWebUI-Front-End für Ollama, konfiguriert über Umgebungsvariablen und mit Labels versehen, damit der Worker es erkennt. |
-| `qdrant` | Vektordatenbank, die von OpenWebUI für Retrieval-Augmented Workflows verwendet wird. |
+| `open-webui` | HomeChatGPT-Front-End (OpenWebUI-Basis) für Ollama, konfiguriert über Umgebungsvariablen und mit Labels versehen, damit der Worker es erkennt. |
+| `qdrant` | Vektordatenbank, die vom HomeChatGPT-Frontend für Retrieval-Augmented Workflows verwendet wird. |
 | `automatic1111` | Stable-Diffusion-Web-UI-Container mit GPU-Reservierungen, Modell-Mounts und Startpatching für Kompatibilitätsanpassungen. |
 
 Compose-Labels (`shs.role`) ermöglichen es dem Worker, beim Parsen der `docker ps`-Ausgabe laufende Container logischen Diensten zuzuordnen.
 
 ## Zentrale Funktionen
 - **Docker-bewusste Orchestrierung** – Erkennt gelabelte Container über die Docker-CLI, stellt Status-Telemetrie bereit und geht sanft mit CLI-Fehlern oder Abbrüchen um.
-- **Konfigurierbare Serviceendpunkte** – Zentralisierte Optionsobjekte definieren Basis-URLs, GPU-Schwellenwerte und Health Checks für Ollama-, OpenWebUI- und Stable-Diffusion-Dienste.
+- **Konfigurierbare Serviceendpunkte** – Zentralisierte Optionsobjekte definieren Basis-URLs, GPU-Schwellenwerte und Health Checks für Ollama-, HomeChatGPT- (OpenWebUI) und Stable-Diffusion-Dienste.
 - **GPU-Richtlinienkonfiguration** – Ressourcenscheduler-Schwellen werden in der Konfiguration erfasst, um zukünftige Automatisierung zu ermöglichen, während Betriebsteams die Limits weiterhin manuell durchsetzen.
 - **Betriebliche Anleitung** – Runbooks dokumentieren Protokollpfade, Neustartverfahren, Health Checks und Eskalationspfade für den Produktivbetrieb.
 
@@ -36,14 +36,14 @@ Compose-Labels (`shs.role`) ermöglichen es dem Worker, beim Parsen der `docker 
    ```bash
    docker compose -f docker/compose.yaml logs -f shs-worker
    ```
-4. OpenWebUI unter `http://localhost:3003` aufrufen (sofern nicht überschrieben) und die Einsatzbereitschaft von Stable Diffusion unter `http://localhost:7860` prüfen.
+4. HomeChatGPT (OpenWebUI) unter `http://localhost:3003` aufrufen (sofern nicht überschrieben) und die Einsatzbereitschaft von Stable Diffusion unter `http://localhost:7860` prüfen.
 
 Der Worker meldet jeden erkannten Dienst mit Container-ID, Image, Status und Running-Flag, was eine schnelle Validierung der Stack-Gesundheit ermöglicht.
 
 ## Konfiguration
 Laufzeiteinstellungen befinden sich in `SecureHomeSystem/appsettings.json` und können beim Betrieb im Container über Umgebungsvariablen überschrieben werden. Wichtige Abschnitte sind:
 - `Docker`: Compose-Dateipfad, Projektname, Auto-Start-Profile und Auswahlkriterien für die Erkennung.
-- `Services`: Endpunkt-Metadaten für Ollama, OpenWebUI und Stable Diffusion, einschließlich Health-Check-Pfaden und GPU-Speicherlimits.
+- `Services`: Endpunkt-Metadaten für Ollama, HomeChatGPT (OpenWebUI) und Stable Diffusion, einschließlich Health-Check-Pfaden und GPU-Speicherlimits.
 - `ResourceScheduler`: GPU-Auslastungsschwellen und Polling-Frequenz für zukünftige Scheduling-Funktionen.
 
 Siehe `docs/reference/configuration.md` für die vollständige Parameterreferenz und Standardwerte, einschließlich der verschachtelten Erkennungseinstellungen unter `Docker:Detection` und Service-Endpunkt-Overrides.

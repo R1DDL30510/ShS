@@ -64,6 +64,13 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
             }
 
             var selectorMap = _options.Detection.LabelSelector;
+            if (selectorMap.Count == 0)
+            {
+                _logger.LogInformation("No docker label selectors configured; skipping detection.");
+                return detected;
+            }
+
+            var friendlyNames = _options.Detection.FriendlyNames;
 
             foreach (var line in stdout.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
@@ -85,9 +92,14 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
                         continue;
                     }
 
+                    var displayName = friendlyNames.TryGetValue(kvp.Key, out var friendlyName)
+                        ? friendlyName
+                        : kvp.Key;
+
                     detected.Add(new DetectedService
                     {
                         Name = kvp.Key,
+                        DisplayName = displayName,
                         ContainerId = tokens[0],
                         Image = tokens[2],
                         Status = tokens[3],

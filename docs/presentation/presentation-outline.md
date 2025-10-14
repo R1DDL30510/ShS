@@ -14,7 +14,7 @@ Verwenden Sie diesen Leitfaden, um ein ausgearbeitetes Folienset (≈15 Folien) 
 
 ## Folie 2 – Agenda
 - Listen Sie 4–5 Abschnitte auf: Überblick, Architektur, Komponenten, Betrieb, Roadmap.
-- Nennen Sie Demo-Kontrollpunkte (OpenWebUI, Stable Diffusion).
+- Nennen Sie Demo-Kontrollpunkte (HomeChatGPT/OpenWebUI, Stable Diffusion).
 - **Screenshot-Platzhalter:** `[[Screenshot: Inhaltsverzeichnis-Layout]]`
   - Exportieren Sie den Folienskeleton nach der Finalisierung, um den Ablauf zu zeigen; ersetzen Sie ihn beim Design durch eine stilisierte Agenda-Grafik.
 
@@ -27,7 +27,7 @@ Verwenden Sie diesen Leitfaden, um ein ausgearbeitetes Folienset (≈15 Folien) 
 
 ## Folie 4 – Lösungsüberblick
 - Beschreiben Sie den .NET-9-Worker, den Docker-Compose-Stack und die generativen KI-Werkzeuge.
-- Ordnen Sie Dienste ihren Rollen zu (Worker = Orchestrator, OpenWebUI = LLM-Frontend, Qdrant = Vektorspeicher, AUTOMATIC1111 = Bildgenerierung).
+- Ordnen Sie Dienste ihren Rollen zu (Worker = Orchestrator, HomeChatGPT/OpenWebUI = LLM-Frontend, Qdrant = Vektorspeicher, AUTOMATIC1111 = Bildgenerierung).
 - **Screenshot-Platzhalter:** `[[Screenshot: README-Überblicksabschnitt]]`
   - Öffnen Sie `README.md` in der IDE-Vorschau, zoomen Sie in den Überblickstext und nehmen Sie einen sauberen Ausschnitt auf.
 
@@ -35,7 +35,7 @@ Verwenden Sie diesen Leitfaden, um ein ausgearbeitetes Folienset (≈15 Folien) 
 - Stellen Sie die Interaktion zwischen Worker, Docker-Daemon, Containern und Host-GPU dar.
 - Erwähnen Sie labelbasierte Erkennung (`shs.role`) und Umgebungsvariablen.
 - **Screenshot-Platzhalter:** `[[Screenshot: Architekturdiagramm]]`
-  - Erstellen oder exportieren Sie ein Diagramm mit: Worker-Container ↔ Docker-Socket ↔ OpenWebUI/Qdrant/AUTOMATIC1111.
+  - Erstellen oder exportieren Sie ein Diagramm mit: Worker-Container ↔ Docker-Socket ↔ HomeChatGPT (OpenWebUI)/Qdrant/AUTOMATIC1111.
   - Werkzeuge: draw.io, Visio oder PowerPoint SmartArt.
 
 ## Folie 6 – Compose-Stack-Topologie
@@ -52,11 +52,11 @@ Verwenden Sie diesen Leitfaden, um ein ausgearbeitetes Folienset (≈15 Folien) 
 - **Screenshot-Platzhalter:** `[[Screenshot: Worker-Logs im Terminal]]`
   - Führen Sie `docker compose -f docker/compose.yaml logs -f shs-worker` aus und zeichnen Sie einen Abschnitt mit Erkennungen auf.
 
-## Folie 8 – OpenWebUI & Qdrant
-- Beschreiben Sie, wie OpenWebUI die LLM-Nutzeroberfläche bereitstellt und Qdrant für RAG nutzt.
+## Folie 8 – HomeChatGPT (OpenWebUI) & Qdrant
+- Beschreiben Sie, wie HomeChatGPT (OpenWebUI) die LLM-Nutzeroberfläche bereitstellt und Qdrant für RAG nutzt.
 - Verweisen Sie auf Umgebungsvariablen aus `docker/.env` (`OLLAMA_BASE_URL`, `WEBUI_PORT` usw.).
 - Notieren Sie die Standardauthentifizierung (`OPENWEBUI_AUTH=false`) und Datenverzeichnisse.
-- **Screenshot-Platzhalter:** `[[Screenshot: OpenWebUI-Startseite]]`
+- **Screenshot-Platzhalter:** `[[Screenshot: HomeChatGPT-Startseite]]`
   - Rufen Sie `http://localhost:3003` auf und erfassen Sie das Haupt-Dashboard, sobald Modelle geladen sind.
 
 ## Folie 9 – Stable Diffusion (AUTOMATIC1111)
@@ -89,7 +89,7 @@ Verwenden Sie diesen Leitfaden, um ein ausgearbeitetes Folienset (≈15 Folien) 
 
 ## Folie 13 – Demoplan & Kontrollpunkte
 - Skizzieren Sie den Demoablauf:
-  1. Worker-Profil starten und OpenWebUI/Qdrant bestätigen.
+  1. Worker-Profil starten und HomeChatGPT (OpenWebUI)/Qdrant bestätigen.
   2. Diffusionsprofil aktivieren und Stable Diffusion validieren.
   3. Worker-Logs zeigen, die Dienste erkennen.
 - Verknüpfen Sie Kontrollpunkte mit den Befehlen aus `docs/setup/docker-compose.md`.

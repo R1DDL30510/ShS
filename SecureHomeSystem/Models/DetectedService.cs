@@ -13,6 +13,12 @@ public sealed class DetectedService
     public string Name { get; init; } = string.Empty;
 
     /// <summary>
+    /// Friendly name resolved from configuration, surfaced in worker logs for
+    /// stakeholder-facing messaging.
+    /// </summary>
+    public string DisplayName { get; init; } = string.Empty;
+
+    /// <summary>
     /// Full Docker container ID. The worker truncates this value to 12 characters in logs
     /// for readability but retains the full string here for traceability.
     /// </summary>

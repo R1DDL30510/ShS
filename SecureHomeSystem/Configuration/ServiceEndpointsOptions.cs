@@ -24,6 +24,11 @@ public sealed class ServiceEndpointsOptions
 public sealed class OllamaOptions
 {
     /// <summary>
+    /// Human-friendly name used in worker logs and documentation.
+    /// </summary>
+    public string DisplayName { get; set; } = "Ollama";
+
+    /// <summary>
     /// Base URL surfaced in worker logs when the stack initialises.
     /// </summary>
     public string BaseUrl { get; set; } = "http://host.docker.internal:11434";
@@ -42,6 +47,12 @@ public sealed class OllamaOptions
 public sealed class OpenWebUiOptions
 {
     /// <summary>
+    /// Customisable display name for the web UI so presenters can surface the
+    /// HomeChatGPT branding without renaming Compose services.
+    /// </summary>
+    public string DisplayName { get; set; } = "HomeChatGPT";
+
+    /// <summary>
     /// Base URL for the web UI. Defaults to the Compose port binding.
     /// </summary>
     public string BaseUrl { get; set; } = "http://localhost:3003";
@@ -59,6 +70,12 @@ public sealed class OpenWebUiOptions
 
 public sealed class StableDiffusionOptions
 {
+    /// <summary>
+    /// Friendly name mirrored in logs to avoid leaking implementation details
+    /// during stakeholder demos.
+    /// </summary>
+    public string DisplayName { get; set; } = "Stable Diffusion";
+
     /// <summary>
     /// Base URL for the AUTOMATIC1111 UI when the diffusion profile is enabled.
     /// </summary>
