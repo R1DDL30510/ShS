@@ -1,35 +1,64 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Services;
 
-namespace SecureHomeSystem
+namespace SecureHomeSystem;
+
+/// <summary>
+/// Entry point for the SecureHomeSystem worker host. The bootstrapper configures
+/// strongly typed options, registers the background worker, and exposes lightweight
+/// HTTP endpoints for health monitoring.
+/// </summary>
+public static class Program
 {
     /// <summary>
-    /// Entry point for the SecureHomeSystem worker host. The bootstrapper wires up
-    /// strongly typed configuration objects and registers hosted services so that
-    /// the <see cref="Worker"/> background service can orchestrate managed containers.
+    /// Builds the default host, binds configuration sections to options, and exposes
+    /// `/health` and `/live` endpoints alongside the orchestrator worker.
     /// </summary>
-    public class Program
+    /// <param name="args">Command-line arguments forwarded by the hosting infrastructure.</param>
+    public static void Main(string[] args)
     {
-        /// <summary>
-        /// Builds the default host, binds configuration sections to options, and
-        /// starts the hosted worker service. This method mirrors the setup carried
-        /// out by <c>dotnet new worker</c> but adds the bespoke configuration objects
-        /// required by the SecureHomeSystem stack.
-        /// </summary>
-        /// <param name="args">Command-line arguments forwarded by the hosting infrastructure.</param>
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
+        builder.Services.Configure<ServiceEndpointsOptions>(builder.Configuration.GetSection("Services"));
+        builder.Services.Configure<ResourceSchedulerOptions>(builder.Configuration.GetSection("ResourceScheduler"));
+        builder.Services.Configure<HealthOptions>(builder.Configuration.GetSection("Health"));
+
+        var healthOptions = builder.Configuration.GetSection("Health").Get<HealthOptions>() ?? new();
+        var healthPath = NormalizePath(healthOptions.HealthPath, "/health");
+        var livenessPath = NormalizePath(healthOptions.LivenessPath, "/live");
+
+        builder.Services
+            .AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy());
+
+        builder.Services.AddSingleton<IDockerServiceDetector, DockerServiceDetector>();
+        builder.Services.AddHostedService<Worker>();
+
+        builder.WebHost.ConfigureKestrel(options =>
         {
-            var builder = Host.CreateApplicationBuilder(args);
+            options.ListenAnyIP(healthOptions.Port);
+        });
 
-            builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
-            builder.Services.Configure<ServiceEndpointsOptions>(builder.Configuration.GetSection("Services"));
-            builder.Services.Configure<ResourceSchedulerOptions>(builder.Configuration.GetSection("ResourceScheduler"));
+        var app = builder.Build();
 
-            builder.Services.AddSingleton<IDockerServiceDetector, DockerServiceDetector>();
-            builder.Services.AddHostedService<Worker>();
+        app.MapHealthChecks(healthPath);
+        app.MapGet(livenessPath, () => Results.Ok(new { status = "Healthy" }));
 
-            var host = builder.Build();
-            host.Run();
+        app.Run();
+
+        static string NormalizePath(string? candidate, string fallback)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+            {
+                return fallback;
+            }
+
+            return candidate.StartsWith('/') ? candidate : $"/{candidate}";
         }
     }
 }

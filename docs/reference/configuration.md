@@ -37,3 +37,8 @@ The worker loads configuration from `SecureHomeSystem/appsettings.json`, with ov
 - `QueueBackoffSeconds` (`int`): Delay placeholder for retrying queued jobs. Default: `30` (development override reduces to `10`).
 
 > **Note:** The worker currently records resource policy targets for operational awareness; automated enforcement is not yet implemented.
+
+## `Health`
+- `Port` (`int`): TCP port bound by the worker for health and liveness endpoints. Default: `5080`.
+- `HealthPath` (`string`): Path exposed via ASP.NET Core health checks, consumed by the Compose health probe. Default: `/health`.
+- `LivenessPath` (`string`): Minimal JSON endpoint for quick manual checks. Default: `/live`.

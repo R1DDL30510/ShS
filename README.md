@@ -16,9 +16,10 @@ The project combines a lightweight orchestration worker with a Docker Compose wo
 Compose labels (`shs.role`) allow the worker to correlate running containers with logical services when parsing `docker ps` output.
 
 ## Key Capabilities
-- **Docker-aware orchestration** – Detects labelled containers via the Docker CLI, surfaces status telemetry, and gracefully handles CLI failures or cancellation.
-- **Configurable service endpoints** – Centralised options objects define base URLs, GPU thresholds, and health probes for Ollama, OpenWebUI, and Stable Diffusion services.
-- **GPU policy configuration** – Resource scheduler thresholds are captured in configuration for future automation while operations teams continue to enforce limits manually.
+- **Docker-aware orchestration** - Detects labelled containers via the Docker CLI, surfaces status telemetry, and gracefully handles CLI failures or cancellation.
+- **Configurable service endpoints** - Centralised options objects define base URLs, GPU thresholds, and health probes for Ollama, OpenWebUI, and Stable Diffusion services.
+- **HTTP health endpoints** - `/health` and `/live` routes expose the worker's status for Compose health checks and external monitoring.
+- **GPU policy configuration** - Resource scheduler thresholds are captured in configuration for future automation while operations teams continue to enforce limits manually.
 - **Operational guidance** – Runbooks document log locations, restart procedures, health checks, and escalation paths for production operations.
 
 ## Prerequisites
@@ -45,11 +46,13 @@ Runtime settings live in `SecureHomeSystem/appsettings.json` and can be overridd
 - `Docker`: Compose file path, project name, auto-start profiles, and detection label selectors.
 - `Services`: Endpoint metadata for Ollama, OpenWebUI, and Stable Diffusion, including health check paths and GPU memory caps.
 - `ResourceScheduler`: GPU utilisation thresholds and polling cadence for future scheduling features.
+- `Health`: Port and path configuration for the worker’s `/health` and `/live` endpoints.
 
 Refer to `docs/reference/configuration.md` for the full parameter reference and defaults, including the nested detection settings under `Docker:Detection` and service endpoint overrides.
 
 ## Operations
 - **Status checks:** `docker compose -f docker/compose.yaml ls` and `docker ps --filter label=shs.role` to confirm container health.
+- **Worker health:** `curl http://localhost:5080/health` (customise with `WORKER_HEALTH_PORT`) for an HTTP 200 response.
 - **Logs:** Use `docker compose -f docker/compose.yaml logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
 - **Restarts:** Target a single service with `docker compose restart <service>` or recycle the full stack with `down`/`up -d`.
 - **GPU management:** Follow the GPU policy guidance to maintain VRAM caps and queue behaviour during contention.
@@ -88,6 +91,5 @@ Operational issues and feature proposals should be tracked via the repository is
 4. Open a pull request with context, testing evidence, and rollback considerations.
 
 ## Revision Flags
-- ⚠️ **Worker health endpoint** – The worker currently has no HTTP health probe; update documentation once an endpoint is implemented.
 - ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
 - ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.

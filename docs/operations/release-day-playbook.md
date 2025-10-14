@@ -30,8 +30,9 @@
    - `docker compose -f docker/compose.yaml logs -f shs-worker`.
    - Erwartete Logzeile: _"Detected service open-webui | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
 5. **Health Checks bestätigen**
+   - `curl http://localhost:5080/health` (Worker Health).
    - `curl http://localhost:3003/api/system/info` (OpenWebUI).
-   - `curl -X POST http://localhost:7860/sdapi/v1/txt2img ...` (Stable Diffusion Smoke Test – Prompt steht in `SecureHomeSystem/Configuration/ServiceEndpointsOptions.cs`).
+   - `curl -X POST http://localhost:7860/sdapi/v1/txt2img ...` (Stable Diffusion Smoke Test - Prompt steht in `SecureHomeSystem/Configuration/ServiceEndpointsOptions.cs`).
 6. **Demo vorbereiten**
    - Tabs im Browser öffnen (OpenWebUI, AUTOMATIC1111, ggf. Dashboard).
    - Terminalfenster mit Worker-Logs bereit halten.
@@ -52,7 +53,6 @@
    - OpenWebUI-Interaktion: Prompt generieren, Verweis auf GPU-Limits.
    - Optional: Diffusion-Profil starten, Wartezeit mit Hinweis auf `ServiceDetectionOptions.RetryCount` füllen.
 4. **Risiken & Flags (Slide 14)**
-   - Health Endpoint fehlt (`docs/operations/runbook.md`).
    - Tests fehlen (`README.md`).
    - GPU-Automatisierung offen (`docs/operations/gpu-policy.md`).
 5. **Roadmap & Call to Action**
@@ -65,7 +65,6 @@
 
 | Flag | Bedeutung | Aktueller Plan |
 | --- | --- | --- |
-| 🟡 `worker-health-endpoint` | HTTP Healthcheck fehlt. | Backlog Issue #12, Slide 14 erwähnen, keine Live-Demo geplant. |
 | 🟡 `testing-gap` | Keine automatisierten Tests. | Während Q&A proaktiv adressieren, Contribution-Aufruf wiederholen. |
 | 🟠 `gpu-policy-automation` | Enforcement fehlt. | Manuellen Prozess im Runbook betonen, Verantwortliche im Betrieb nennen. |
 | 🔵 `documentation-sync` | Präsentationsinhalte ↔ README konsistent halten. | Nach jedem Merge `docs/presentation/presentation-outline.md` prüfen. |

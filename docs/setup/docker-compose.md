@@ -32,6 +32,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 - Workspace: `../stablediff/stable-diffusion-webui` (when present) is mounted read-only for patch scripts.
 
 ## Health Checks
+- Worker: `curl http://localhost:${WORKER_HEALTH_PORT:-5080}/health`.
 - Check container states with `docker compose ps`.
 - OpenWebUI: `curl http://localhost:3003/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.

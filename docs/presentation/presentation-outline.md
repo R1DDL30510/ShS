@@ -46,10 +46,10 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 - **Screenshot placeholder:** `[[Screenshot: Docker Desktop containers view]]`  
   - Launch the stack, open Docker Desktop, filter by project name `shs-stack`, and capture running services.
 
-## Slide 7 – SecureHomeSystem Worker Deep Dive
+## Slide 7 - SecureHomeSystem Worker Deep Dive
 - Outline worker responsibilities: load config, detect containers, log status every 30 seconds.
 - Call out `Worker.cs` detection loop and `IDockerServiceDetector` abstraction.
-- Mention absence of HTTP health probe (revision flag).
+- Highlight the new `/health` and `/live` endpoints surfaced by `Program.cs` for monitoring integrations.
 - **Screenshot placeholder:** `[[Screenshot: Worker logs in terminal]]`  
   - Run `docker compose -f docker/compose.yaml logs -f shs-worker` and capture a segment showing detections.
 
@@ -99,11 +99,10 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 
 ## Slide 14 – Risks, Flags & Follow-Up Actions
 - Present outstanding items to verify before publication:
-  - Worker HTTP health probe missing (`README.md:89`, `docs/operations/runbook.md:19`).
-  - No automated tests (`README.md:90`).
-  - GPU policy automation pending (`README.md:91`, `docs/operations/gpu-policy.md:24`).
-  - Windows Event Log forwarding undocumented (`docs/operations/runbook.md:9`).
-  - GPU enforcement doc refresh needed (`docs/setup/docker-compose.md:27`).
+  - Keine automatisierten Tests (`README.md` – Abschnitt **Revision Flags**).
+  - GPU-Policy-Automatisierung steht noch aus (`README.md` – Abschnitt **Revision Flags**, `docs/operations/gpu-policy.md`).
+  - Windows Event Log Forwarding weiterhin offen (`docs/operations/runbook.md` – Abschnitt **Logs**).
+  - GPU-Dokumentation für Limits aktualisieren (`docs/setup/docker-compose.md` – Abschnitt **GPU Limits**).
 - Suggest owner assignment and timelines to resolve each flag.
 - **Screenshot placeholder:** `[[Screenshot: Issue tracker board highlighting follow-ups]]`  
   - Use your preferred tracker (GitHub Projects, Jira) to display tasks mapped to each flag.
