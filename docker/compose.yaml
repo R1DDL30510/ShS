@@ -35,12 +35,13 @@ services:
       - "${WEBUI_PORT:-3003}:8080"
     environment:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      - WEBUI_AUTH=${OPENWEBUI_AUTH:-false}
+      - WEBUI_AUTH=true
       - OLLAMA_MAX_GPU_MEMORY=${OLLAMA_MAX_GPU_MEMORY:-0.8}
     volumes:
       - ${DATA_DIR:-../data}/open-webui:/app/backend/data
     labels:
       shs.role: open-webui
+
 
   qdrant:
     image: qdrant/qdrant:v1.15.4
