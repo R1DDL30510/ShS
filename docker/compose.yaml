@@ -30,7 +30,7 @@ services:
     volumes:
       - ${DATA_DIR:-../data}/open-webui:/app/backend/data
     labels:
-      shs.role: open-webui # Worker-Logs zeigen HomeChatGPT (Friendly Names)
+      shs.role: open-webui # Worker-Logs zeigen HomeChatGPT (FriendlyNames-Mapping)
 
   qdrant:
     image: qdrant/qdrant:v1.15.4

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Apply compatibility patch for legacy AUTOMATIC1111 builds.
-The upstream image we consume ships a models.py where the generated
-OptionsModel treats sd_model_checkpoint as Optional[NoneType], which breaks
-the /sdapi/v1/options response once a checkpoint is selected.
+Kompatibilitätspatch für ältere AUTOMATIC1111-Builds anwenden.
+Das verwendete Upstream-Image liefert eine models.py, in der das generierte
+OptionsModel `sd_model_checkpoint` als Optional[NoneType] behandelt. Sobald ein
+Checkpoint gewählt ist, schlägt dadurch die Antwort von /sdapi/v1/options fehl.
 
-This script rewrites the relevant block so the field is typed as Optional[str]
-and ensures a non-null default. It is idempotent and safe to run multiple times.
+Dieses Skript überschreibt den relevanten Block, damit das Feld als Optional[str]
+typisiert ist und ein nicht-leerer Standardwert gesetzt wird. Der Ablauf ist
+idempotent und kann gefahrlos mehrfach ausgeführt werden.
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ def apply_patch() -> bool:
     )
 
     if target not in text:
-        raise RuntimeError("Expected models.py structure not found; aborting patch.")
+        raise RuntimeError("Erwartete Struktur in models.py nicht gefunden – Patch wird abgebrochen.")
 
     MODEL_PATH.write_text(text.replace(target, replacement, 1))
     return True
@@ -47,9 +48,9 @@ def apply_patch() -> bool:
 def main() -> None:
     changed = apply_patch()
     if changed:
-        print("Applied automatic1111 OptionsModel compatibility patch.")
+        print("Kompatibilitätspatch für AUTOMATIC1111-OptionsModel angewendet.")
     else:
-        print("Patch already present; no changes made.")
+        print("Patch bereits vorhanden; keine Änderungen vorgenommen.")
 
 
 if __name__ == "__main__":

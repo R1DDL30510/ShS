@@ -1,41 +1,40 @@
 namespace SecureHomeSystem.Models;
 
 /// <summary>
-/// Immutable representation of a container discovered by the Docker detector. Each
-/// instance backs a single log entry so that release presenters can narrate container
-/// status without digging through CLI output.
+/// Unveränderliche Darstellung eines Containers, den der Docker-Detektor gefunden hat.
+/// Jede Instanz entspricht einem Logeintrag, damit Präsentierende den Containerstatus
+/// schildern können, ohne CLI-Ausgaben durchsuchen zu müssen.
 /// </summary>
 public sealed class DetectedService
 {
     /// <summary>
-    /// Logical service key (e.g. <c>open-webui</c>) derived from the detection options.
+    /// Logischer Dienstschlüssel (z. B. <c>open-webui</c>), abgeleitet aus den Erkennungsoptionen.
     /// </summary>
     public string Name { get; init; } = string.Empty;
 
     /// <summary>
-    /// Friendly name resolved from configuration, surfaced in worker logs for
-    /// stakeholder-facing messaging.
+    /// Konfigurierter Anzeigename, der in den Worker-Logs für Stakeholder-Kommunikation erscheint.
     /// </summary>
     public string DisplayName { get; init; } = string.Empty;
 
     /// <summary>
-    /// Full Docker container ID. The worker truncates this value to 12 characters in logs
-    /// for readability but retains the full string here for traceability.
+    /// Vollständige Docker-Container-ID. Die Logs kürzen den Wert auf 12 Zeichen,
+    /// hier bleibt er aus Gründen der Nachvollziehbarkeit vollständig erhalten.
     /// </summary>
     public string ContainerId { get; init; } = string.Empty;
 
     /// <summary>
-    /// Image reference reported by <c>docker ps</c>.
+    /// Image-Referenz laut <c>docker ps</c>.
     /// </summary>
     public string Image { get; init; } = string.Empty;
 
     /// <summary>
-    /// Raw status string returned by Docker (e.g. <c>Up 2 minutes</c>).
+    /// Unverarbeiteter Status-String von Docker (z. B. <c>Up 2 minutes</c>).
     /// </summary>
     public string Status { get; init; } = string.Empty;
 
     /// <summary>
-    /// Convenience boolean indicating whether the status contains "Up".
+    /// Hilfsbool, das anzeigt, ob der Status den Begriff „Up“ enthält.
     /// </summary>
     public bool IsRunning { get; init; }
 }

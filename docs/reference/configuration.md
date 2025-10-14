@@ -32,7 +32,7 @@ Der Worker lädt die Konfiguration aus `SecureHomeSystem/appsettings.json`, wobe
 - `DisplayName` (`string`): Anzeigename für Stakeholder-Kommunikation. Standard: `Stable Diffusion`.
 - `BaseUrl` (`string`): Endpunkt der Stable-Diffusion-Oberfläche. Repository-Standard: `http://localhost:7860`.
 - `LaunchProfile` (`string`): Compose-Profil, das für Stable Diffusion aktiviert sein muss. Standard: `diffusion`.
-- `SmokeTestPrompt` (`string`): Kurzer Prompt-Platzhalter für zukünftige Smoke-Tests. Standard: `Generate a 64x64 diagnostic image`.
+- `SmokeTestPrompt` (`string`): Kurzer Prompt-Platzhalter für zukünftige Smoke-Tests. Standard: `Erzeuge ein 64x64-Diagnosebild`.
 
 ## `ResourceScheduler`
 - `GpuUtilisationThreshold` (`double`): Bevorzugte Auslastungsobergrenze, die in der Konfiguration hinterlegt ist. Standard: `0.5` (50 %).
