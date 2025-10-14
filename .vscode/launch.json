@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug SecureHomeSystem",
+            "name": "Debug Worker (Standalone)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -11,8 +11,53 @@
             "cwd": "${workspaceFolder}/SecureHomeSystem",
             "stopAtEntry": false,
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
             }
+        },
+        {
+            "name": "Debug Worker (with Docker Services)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "docker-compose-services",
+            "program": "${workspaceFolder}/SecureHomeSystem/bin/Debug/net9.0/SecureHomeSystem.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/SecureHomeSystem",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Run Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-tests",
+            "program": "dotnet",
+            "args": [
+                "test",
+                "${workspaceFolder}/tests/SecureHomeSystem.Tests/SecureHomeSystem.Tests.csproj",
+                "--filter",
+                "Category=Unit|Category=Integration"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug Full Stack",
+            "configurations": ["Debug Worker (with Docker Services)"],
+            "preLaunchTask": "docker-compose-full-stack",
+            "stopAll": true
         }
     ]
 }

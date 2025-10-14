@@ -11,7 +11,63 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "build-tests",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/tests/SecureHomeSystem.Tests/SecureHomeSystem.Tests.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "docker-compose-services",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/docker && docker compose --profile diffusion up -d automatic1111 open-webui qdrant",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose-full-stack",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/docker && docker compose --profile worker --profile diffusion up -d",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "docker-compose-down",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/docker && docker compose down",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "test-stable-diffusion",
+            "type": "shell",
+            "command": "curl -X POST http://localhost:7860/sdapi/v1/txt2img -H 'Content-Type: application/json' -d '{\"prompt\":\"test pattern, diagnostic image\",\"steps\":1,\"width\":64,\"height\":64}'",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
         }
     ]
 }
