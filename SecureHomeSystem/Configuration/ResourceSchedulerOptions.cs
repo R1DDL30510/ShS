@@ -3,23 +3,23 @@ namespace SecureHomeSystem.Configuration;
 public sealed class ResourceSchedulerOptions
 {
     /// <summary>
-    /// Target GPU utilisation ceiling expressed as a fraction. These values document
-    /// the policy intent even though enforcement logic is still pending.
+    /// Zielwert für die GPU-Auslastung (als Anteil). Dokumentiert die Richtlinie,
+    /// auch wenn die Durchsetzung noch aussteht.
     /// </summary>
     public double GpuUtilisationThreshold { get; set; } = 0.5;
 
     /// <summary>
-    /// Preferred maximum VRAM consumption as a fraction of total GPU memory.
+    /// Bevorzugtes VRAM-Limit als Anteil des Gesamtspeichers.
     /// </summary>
     public double GpuMemoryThreshold { get; set; } = 0.8;
 
     /// <summary>
-    /// Placeholder sampling cadence for future telemetry collectors.
+    /// Platzhalter für die Abtastrate künftiger Telemetriesammler.
     /// </summary>
     public int PollIntervalSeconds { get; set; } = 5;
 
     /// <summary>
-    /// Backoff interval intended for queued jobs once scheduling automation ships.
+    /// Backoff-Intervall für Warteschlangenjobs, sobald Scheduling-Automatisierung verfügbar ist.
     /// </summary>
     public int QueueBackoffSeconds { get; set; } = 30;
 }

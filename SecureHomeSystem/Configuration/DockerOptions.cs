@@ -3,32 +3,31 @@ namespace SecureHomeSystem.Configuration;
 public sealed class DockerOptions
 {
     /// <summary>
-    /// Relative path to the Compose file the worker references when surfacing
-    /// operational commands. Defaults to the repository-managed stack definition.
+    /// Relativer Pfad zur Compose-Datei, auf die sich der Worker bei Befehlsbeispielen bezieht.
+    /// Standardmäßig verweist er auf die Repository-Variante.
     /// </summary>
     public string ComposeFilePath { get; set; } = "docker/compose.yaml";
 
     /// <summary>
-    /// Location of the Compose environment file. Operators customise host-specific
-    /// paths and credentials here during release rehearsals.
+    /// Speicherort der Compose-Umgebungsdatei. Hier passen Operatorinnen und Operatoren
+    /// host-spezifische Pfade und Zugangsdaten für Probeläufe an.
     /// </summary>
     public string EnvironmentFile { get; set; } = "docker/.env";
 
     /// <summary>
-    /// Compose project name used to group containers. Keep this stable so screenshots
-    /// and command snippets remain accurate over time.
+    /// Compose-Projektname zum Gruppieren der Container. Stabil halten, damit Screenshots
+    /// und Befehlsbeispiele langfristig stimmen.
     /// </summary>
     public string ProjectName { get; set; } = "shs-stack";
 
     /// <summary>
-    /// Profiles automatically enabled when the worker orchestrates the stack. The
-    /// default list is empty because automation is not yet wired; documentation still
-    /// references the intended values.
+    /// Profile, die der Worker beim Orchestrieren automatisch aktiviert. Standardmäßig leer,
+    /// da die Automatisierung noch nicht verdrahtet ist – die Dokumentation nennt jedoch die Zielwerte.
     /// </summary>
     public string[] AutoStartProfiles { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Detection settings that map Docker labels to logical service names.
+    /// Erkennungseinstellungen, die Docker-Labels auf logische Dienstenamen abbilden.
     /// </summary>
     public ServiceDetectionOptions Detection { get; set; } = new();
 }
@@ -36,9 +35,8 @@ public sealed class DockerOptions
 public sealed class ServiceDetectionOptions
 {
     /// <summary>
-    /// Dictionary linking logical service identifiers to required Docker labels. Match
-    /// these values with the <c>labels</c> defined in <c>docker/compose.yaml</c> when new
-    /// services are added to the stack.
+    /// Wörterbuch, das logische Dienstkennungen den benötigten Docker-Labels zuordnet.
+    /// Bei neuen Services müssen die Werte zu den <c>labels</c> in <c>docker/compose.yaml</c> passen.
     /// </summary>
     public Dictionary<string, string> LabelSelector { get; set; } = new()
     {
@@ -48,13 +46,13 @@ public sealed class ServiceDetectionOptions
     };
 
     /// <summary>
-    /// Grace period (in seconds) allowed for a container to appear during startup.
+    /// Kulanzzeit (in Sekunden), in der ein Container beim Start auftauchen darf.
     /// </summary>
     public int StartupTimeoutSeconds { get; set; } = 120;
 
     /// <summary>
-    /// Number of retries before the worker marks detection as failed. Use this during
-    /// release planning to gauge how resilient the detection loop should be.
+    /// Anzahl der Versuche, bevor der Worker die Erkennung als fehlgeschlagen markiert.
+    /// Hilfreich zur Planung der gewünschten Robustheit.
     /// </summary>
     public int RetryCount { get; set; } = 3;
 }

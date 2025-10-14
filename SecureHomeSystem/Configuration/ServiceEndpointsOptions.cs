@@ -3,20 +3,20 @@ namespace SecureHomeSystem.Configuration;
 public sealed class ServiceEndpointsOptions
 {
     /// <summary>
-    /// Endpoints and metadata for Ollama. The worker logs these details so presenters
-    /// can cite accurate URLs during walkthroughs.
+    /// Endpunkte und Metadaten für Ollama. Der Worker protokolliert die Angaben,
+    /// damit Vortragende in Demos korrekte URLs nennen können.
     /// </summary>
     public OllamaOptions Ollama { get; set; } = new();
 
     /// <summary>
-    /// OpenWebUI endpoint configuration. Keep the values aligned with Compose overrides
-    /// so detection logs remain truthful.
+    /// OpenWebUI-Endpunktkonfiguration. Halte die Werte synchron zu den Compose-Overrides,
+    /// damit die Erkennungslogs unverfälscht bleiben.
     /// </summary>
     public OpenWebUiOptions OpenWebUi { get; set; } = new();
 
     /// <summary>
-    /// Stable Diffusion endpoint and smoke test hints. The worker currently records
-    /// these settings for future automation.
+    /// Stable-Diffusion-Endpunkt und Hinweise für Smoke-Tests. Der Worker erfasst
+    /// die Einstellungen bereits für zukünftige Automatisierung.
     /// </summary>
     public StableDiffusionOptions StableDiffusion { get; set; } = new();
 }
@@ -24,17 +24,17 @@ public sealed class ServiceEndpointsOptions
 public sealed class OllamaOptions
 {
     /// <summary>
-    /// Base URL surfaced in worker logs when the stack initialises.
+    /// Basis-URL, die der Worker beim Stack-Start in die Logs schreibt.
     /// </summary>
     public string BaseUrl { get; set; } = "http://host.docker.internal:11434";
 
     /// <summary>
-    /// Advisory GPU memory ceiling (fractional). Aligns with <c>OLLAMA_MAX_GPU_MEMORY</c> in Compose.
+    /// Empfohlenes GPU-Speicherlimit (als Anteil). Entspricht <c>OLLAMA_MAX_GPU_MEMORY</c> in Compose.
     /// </summary>
     public double MaxGpuMemoryFraction { get; set; } = 0.8;
 
     /// <summary>
-    /// HTTP path used by manual health checks.
+    /// HTTP-Pfad für manuelle Health-Checks.
     /// </summary>
     public string HealthEndpoint { get; set; } = "/api/tags";
 }
@@ -42,17 +42,17 @@ public sealed class OllamaOptions
 public sealed class OpenWebUiOptions
 {
     /// <summary>
-    /// Base URL for the web UI. Defaults to the Compose port binding.
+    /// Basis-URL der Web-Oberfläche. Standardmäßig entspricht sie dem Compose-Port.
     /// </summary>
     public string BaseUrl { get; set; } = "http://localhost:3003";
 
     /// <summary>
-    /// Indicates if authentication is enforced. Mirrors the <c>OPENWEBUI_AUTH</c> flag.
+    /// Gibt an, ob Authentifizierung erzwungen wird. Spiegelt das Flag <c>OPENWEBUI_AUTH</c> wider.
     /// </summary>
     public bool RequireAuth { get; set; } = false;
 
     /// <summary>
-    /// API endpoint recommended for scripted health checks.
+    /// API-Endpunkt, der sich für automatisierte Health-Checks eignet.
     /// </summary>
     public string HealthEndpoint { get; set; } = "/api/system/info";
 }
@@ -60,17 +60,17 @@ public sealed class OpenWebUiOptions
 public sealed class StableDiffusionOptions
 {
     /// <summary>
-    /// Base URL for the AUTOMATIC1111 UI when the diffusion profile is enabled.
+    /// Basis-URL der AUTOMATIC1111-Oberfläche, wenn das Diffusionsprofil aktiv ist.
     /// </summary>
     public string BaseUrl { get; set; } = "http://localhost:7860";
 
     /// <summary>
-    /// Compose profile required to launch Stable Diffusion resources.
+    /// Compose-Profil, das für das Starten der Stable-Diffusion-Ressourcen benötigt wird.
     /// </summary>
     public string LaunchProfile { get; set; } = "diffusion";
 
     /// <summary>
-    /// Placeholder prompt for smoke tests, handy when narrating release demos.
+    /// Platzhalter-Prompt für Smoke-Tests – praktisch für moderierte Release-Demos.
     /// </summary>
-    public string SmokeTestPrompt { get; set; } = "Generate a 64x64 diagnostic image";
+    public string SmokeTestPrompt { get; set; } = "Erzeuge ein 64x64-Diagnosebild";
 }

@@ -3,13 +3,13 @@ using SecureHomeSystem.Models;
 namespace SecureHomeSystem.Services;
 
 /// <summary>
-/// Contract used by the worker to decouple container discovery from background
-/// orchestration logic. Implementations should remain side-effect free.
+/// Vertrag, der die Container-Erkennung von der Orchestrierungslogik entkoppelt.
+/// Implementierungen sollen nebenwirkungsfrei bleiben.
 /// </summary>
 public interface IDockerServiceDetector
 {
     /// <summary>
-    /// Returns the set of Docker services currently labelled for orchestration.
+    /// Gibt die Menge aktuell gelabelter Docker-Services für die Orchestrierung zurück.
     /// </summary>
     Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken);
 }
