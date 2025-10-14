@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -106,7 +108,30 @@ public sealed class ContainerLogCollector : BackgroundService
             return;
         }
 
+        var runningServices = new List<DetectedService>(services.Count);
+
         foreach (var service in services)
+        {
+            if (service.IsRunning)
+            {
+                runningServices.Add(service);
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Service {Service} is unavailable with status {Status}; log collection postponed.",
+                    service.Name,
+                    service.Status);
+            }
+        }
+
+        if (runningServices.Count == 0)
+        {
+            _logger.LogInformation("Detected services are not running; skipping log harvest until they recover.");
+            return;
+        }
+
+        foreach (var service in runningServices)
         {
             await CollectLogsForServiceAsync(service, cancellationToken).ConfigureAwait(false);
         }
