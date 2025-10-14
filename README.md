@@ -50,7 +50,7 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 
 ## Operations
 - **Status checks:** `docker compose -f docker/compose.yaml ls` and `docker ps --filter label=shs.role` to confirm container health.
-- **Logs:** Use `docker compose logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
+- **Logs:** Use `docker compose -f docker/compose.yaml logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
 - **Restarts:** Target a single service with `docker compose restart <service>` or recycle the full stack with `down`/`up -d`.
 - **GPU management:** Follow the GPU policy guidance to maintain VRAM caps and queue behaviour during contention.
 
@@ -89,4 +89,3 @@ Operational issues and feature proposals should be tracked via the repository is
 - ⚠️ **Worker health endpoint** – The worker currently has no HTTP health probe; update documentation once an endpoint is implemented.
 - ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
 - ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
-
