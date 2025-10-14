@@ -36,13 +36,34 @@ services:
     environment:
       - WEBUI_NAME=SecureHomeGPT
       - ENABLE_PERSISTENT_CONFIG=True
+      - ENABLE_INITIAL_ADMIN_SIGNUP=True
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - WEBUI_AUTH=True
       - OLLAMA_MAX_GPU_MEMORY=${OLLAMA_MAX_GPU_MEMORY:-0.8}
+      - OPENWEBUI_ADMIN_EMAIL=${OPENWEBUI_ADMIN_EMAIL:-admin@securehome.local}
+      - OPENWEBUI_ADMIN_PASSWORD=${OPENWEBUI_ADMIN_PASSWORD:-ChangeMe!123}
+      - OPENWEBUI_ADMIN_NAME=${OPENWEBUI_ADMIN_NAME:-SecureHome Admin}
     volumes:
       - ${DATA_DIR:-../data}/open-webui:/app/backend/data
     labels:
       shs.role: open-webui
+
+  open-webui-bootstrap:
+    image: curlimages/curl:8.8.0
+    restart: "no"
+    depends_on:
+      open-webui:
+        condition: service_started
+    environment:
+      - OPENWEBUI_URL=http://open-webui:8080
+      - OPENWEBUI_ADMIN_EMAIL=${OPENWEBUI_ADMIN_EMAIL:-admin@securehome.local}
+      - OPENWEBUI_ADMIN_PASSWORD=${OPENWEBUI_ADMIN_PASSWORD:-ChangeMe!123}
+      - OPENWEBUI_ADMIN_NAME=${OPENWEBUI_ADMIN_NAME:-SecureHome Admin}
+    volumes:
+      - ./bootstrap-open-webui-admin.sh:/scripts/bootstrap.sh:ro
+    entrypoint:
+      - /bin/sh
+      - /scripts/bootstrap.sh
 
 
   qdrant:
