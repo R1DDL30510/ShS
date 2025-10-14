@@ -49,7 +49,7 @@ public sealed class OpenWebUiOptions
     /// <summary>
     /// Indicates if authentication is enforced. Mirrors the <c>OPENWEBUI_AUTH</c> flag.
     /// </summary>
-    public bool RequireAuth { get; set; } = false;
+    public bool RequireAuth { get; set; } = true;
 
     /// <summary>
     /// API endpoint recommended for scripted health checks.

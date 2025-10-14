@@ -31,7 +31,7 @@ OLLAMA_MAX_GPU_MEMORY=0.8        # VRAM allocation (0.0-1.0)
 AUTOMATIC1111_GPU_SELECTION=all  # GPU device selection
 AUTOMATIC1111_GPU_COUNT=all      # Number of GPUs to use
 AUTOMATIC1111_ARGS=--medvram --opt-sdp-attention  # SD launch flags
-OPENWEBUI_AUTH=false             # Require login for OpenWebUI (set true to enforce auth)
+OPENWEBUI_AUTH=true              # Require login for OpenWebUI (set false only for trusted demos)
 ```
 
 ## Core Configuration
