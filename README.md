@@ -111,6 +111,7 @@ Operational issues and feature proposals should be tracked via the repository is
 - ✅ **Automated testing** – Foundational unit/integration coverage and CI now exist. Extend into Docker-based smoke pipelines once runners support Compose workloads.
 - ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
 - ?? **Log analytics** - Logs now persist under  `/logs`, but no indexing or alerting layer consumes them yet. Revisit once a Loki/Elastic/Promtail integration is prioritised. 
+- ✅ **Docker client dependency** – Removed the unused Docker.DotNet package; ensure the Docker CLI is available wherever the worker runs.
 
 
 

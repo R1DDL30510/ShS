@@ -104,9 +104,83 @@ public sealed class DockerServiceDetectorTests
         fakeRunner.Invocations.Should().ContainSingle();
     }
 
-    private static DockerServiceDetector CreateDetector(IProcessRunner processRunner, ILogger<DockerServiceDetector>? logger = null)
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DetectAsync_RetriesUntilServicesDetected()
     {
-        var options = Options.Create(new DockerOptions());
+        var fakeRunner = new FakeProcessRunner();
+        fakeRunner.EnqueueResult(new ProcessExecutionResult(0, string.Empty, string.Empty));
+
+        var stdout = $"{Guid.NewGuid():N}||open-webui||repo/open-webui:latest||Up 5 seconds||shs.role=open-webui";
+        fakeRunner.EnqueueResult(new ProcessExecutionResult(0, stdout, string.Empty));
+
+        var detectionOptions = new ServiceDetectionOptions
+        {
+            RetryCount = 1,
+            StartupTimeoutSeconds = 1
+        };
+
+        var detector = CreateDetector(fakeRunner, detectionOptions: detectionOptions);
+
+        var result = await detector.DetectAsync(CancellationToken.None);
+
+        result.Should().ContainSingle(service => service.Name == "open-webui");
+        fakeRunner.Invocations.Should().HaveCount(2);
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task DetectAsync_HonoursRetryCountWhenNoGracePeriod()
+    {
+        var fakeRunner = new FakeProcessRunner();
+        var detectionOptions = new ServiceDetectionOptions
+        {
+            RetryCount = 3,
+            StartupTimeoutSeconds = 0
+        };
+
+        for (var i = 0; i < detectionOptions.RetryCount + 1; i++)
+        {
+            fakeRunner.EnqueueResult(new ProcessExecutionResult(0, string.Empty, string.Empty));
+        }
+
+        var detector = CreateDetector(fakeRunner, detectionOptions: detectionOptions);
+
+        var result = await detector.DetectAsync(CancellationToken.None);
+
+        result.Should().BeEmpty();
+        fakeRunner.Invocations.Should().HaveCount(detectionOptions.RetryCount + 1);
+    }
+
+    private static DockerServiceDetector CreateDetector(
+        IProcessRunner processRunner,
+        ILogger<DockerServiceDetector>? logger = null,
+        ServiceDetectionOptions? detectionOptions = null)
+    {
+        var baseOptions = detectionOptions is null
+            ? new ServiceDetectionOptions
+            {
+                LabelSelector = new Dictionary<string, string>
+                {
+                    ["open-webui"] = "shs.role=open-webui",
+                    ["qdrant"] = "shs.role=qdrant",
+                    ["stable-diffusion"] = "shs.role=stable-diffusion"
+                },
+                RetryCount = 0,
+                StartupTimeoutSeconds = 0
+            }
+            : new ServiceDetectionOptions
+            {
+                LabelSelector = detectionOptions.LabelSelector.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase),
+                RetryCount = detectionOptions.RetryCount,
+                StartupTimeoutSeconds = detectionOptions.StartupTimeoutSeconds
+            };
+
+        var options = Options.Create(new DockerOptions
+        {
+            Detection = baseOptions
+        });
+
         return new DockerServiceDetector(options, logger ?? new TestLogger<DockerServiceDetector>(), processRunner);
     }
 }
