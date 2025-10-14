@@ -16,6 +16,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 ## Services & Profiles
 - `shs-worker`: .NET orchestration worker (profile: `worker`). Bundles the Docker CLI and uses the `/var/run/docker.sock` mount to talk to the host daemon.
 - `open-webui`, `qdrant`: Start by default with no profile flag and are labelled with `shs.role` for worker detection.
+- `open-webui-bootstrap`: Ephemeral helper that waits for Open WebUI to answer `/health`, provisions the default admin account, and exits. The helper is idempotent—it will report success when the account already exists and always verifies the supplied credentials via the sign-in API before completing.
 - `automatic1111`: Only starts when the `diffusion` profile is supplied. GPU access is exposed through the `deploy.resources.reservations.devices` entry and the `NVIDIA_VISIBLE_DEVICES`/`AUTOMATIC1111_GPU_*` environment variables. The container runs `docker/automatic1111_patch.py` before launching Stable Diffusion.
 
 ## GPU Limits
@@ -39,6 +40,19 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 - Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111 (when the `diffusion` profile is active): `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
 - The worker logs detected services every 30 seconds (`docker compose logs shs-worker`) and persists structured entries under `/logs/worker` inside the container (`LOG_DIR` on the host).
+
+## Default Open WebUI Admin Credentials
+- `docker/compose.yaml` seeds Open WebUI with a predictable first user so deployments always start with a working admin login. The helper uses the Open WebUI REST API—mirroring the UI flow—so the first account still receives the `admin` role automatically.
+- Override the defaults through `.env`:
+  - `OPENWEBUI_ADMIN_EMAIL` (default `admin@securehome.local`)
+  - `OPENWEBUI_ADMIN_PASSWORD` (default `ChangeMe!123`)
+  - `OPENWEBUI_ADMIN_NAME` (default `SecureHome Admin`)
+- The bootstrapper replays the flow on every start and validates the credentials via `/api/v1/auths/signin`. If the user already exists, the script logs the reuse and simply confirms the password still works. Update the `.env` overrides before the first successful bootstrap run to change the persisted credentials.
+
+## Data Persistence & Fresh Installs
+- Open WebUI, Qdrant, and AUTOMATIC1111 store their state in the `../data` directory relative to the repository. Deleting this folder (or starting from a new host without it) yields a pristine deployment with an empty SQLite database and vector store.
+- Rolling out to a new PC therefore behaves like a fresh install: the bootstrapper creates the admin account against the clean database and checkpoints must be recopied manually if they are required.
+- To migrate existing checkpoints, copy the relevant subfolders from the original `../data` directory before starting the stack.
 
 ## Checkpoints
 1. **Checkpoint 1 – Ollama/OpenWebUI**  
