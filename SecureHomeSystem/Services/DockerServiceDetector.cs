@@ -11,12 +11,22 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
     private readonly DockerOptions _options;
     private readonly ILogger<DockerServiceDetector> _logger;
 
+    /// <summary>
+    /// Binds configuration and logger dependencies for the detector. All constructor
+    /// parameters are resolved by the hosting container; no additional setup is required
+    /// when the worker is run via <c>docker compose</c>.
+    /// </summary>
     public DockerServiceDetector(IOptions<DockerOptions> options, ILogger<DockerServiceDetector> logger)
     {
         _options = options.Value;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Executes a <c>docker ps</c> command and maps labelled containers to logical services.
+    /// The method returns a stable snapshot that the worker logs for observability.
+    /// </summary>
+    /// <param name="cancellationToken">Token used to abort the CLI invocation during shutdown.</param>
     public async Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken)
     {
         var detected = new List<DetectedService>();
