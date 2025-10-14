@@ -199,6 +199,107 @@ public sealed class ContainerLogCollectorTests
         runner.Invocations.Should().BeEmpty();
     }
 
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task RunOnceAsync_IgnoresServicesThatAreNotRunning()
+    {
+        using var temp = new TempDirectory();
+        var storage = new LogStorageOptions
+        {
+            RootPath = temp.Path,
+            ServicesFolderName = "services",
+            StateFolderName = "state"
+        };
+
+        var service = new DetectedService
+        {
+            Name = "stable-diffusion",
+            ContainerId = "stopped123",
+            Image = "repo/stable-diffusion:latest",
+            Status = "Exited (0) 3 seconds ago",
+            IsRunning = false
+        };
+
+        var detector = new FixedDockerServiceDetector(new[] { service });
+        var runner = new FakeProcessRunner();
+
+        var collector = CreateCollector(
+            detector,
+            runner,
+            storage,
+            new LogCollectorOptions
+            {
+                Enabled = true
+            });
+
+        var token = TestContext.Current.CancellationToken;
+
+        await collector.RunOnceAsync(token);
+
+        var servicesDirectory = Path.Combine(storage.RootPath, storage.ServicesFolderName);
+        var stateDirectory = Path.Combine(storage.RootPath, storage.StateFolderName);
+
+        Directory.Exists(servicesDirectory).Should().BeTrue();
+        Directory.Exists(stateDirectory).Should().BeTrue();
+        Directory.GetFiles(servicesDirectory, $"{service.Name}*.log").Should().BeEmpty();
+        runner.Invocations.Should().BeEmpty();
+    }
+
+    [Fact]
+    [Trait("Category", "Unit")]
+    public async Task RunOnceAsync_CollectsLogsForRunningServicesOnly()
+    {
+        using var temp = new TempDirectory();
+        var storage = new LogStorageOptions
+        {
+            RootPath = temp.Path,
+            ServicesFolderName = "services",
+            StateFolderName = "state"
+        };
+
+        var runningService = new DetectedService
+        {
+            Name = "assistant",
+            ContainerId = "running123",
+            Image = "repo/assistant:latest",
+            Status = "Up 3 minutes",
+            IsRunning = true
+        };
+
+        var stoppedService = new DetectedService
+        {
+            Name = "database",
+            ContainerId = "stopped456",
+            Image = "repo/database:latest",
+            Status = "Exited (0) 1 minute ago",
+            IsRunning = false
+        };
+
+        var detector = new FixedDockerServiceDetector(new[] { runningService, stoppedService });
+        var runner = new FakeProcessRunner();
+        runner.EnqueueResult(new ProcessExecutionResult(0, $"{DateTimeOffset.UtcNow:O} ready", string.Empty));
+
+        var collector = CreateCollector(
+            detector,
+            runner,
+            storage,
+            new LogCollectorOptions
+            {
+                Enabled = true
+            });
+
+        var token = TestContext.Current.CancellationToken;
+
+        await collector.RunOnceAsync(token);
+
+        runner.Invocations.Should().ContainSingle(invocation => invocation.Arguments.Contains(runningService.ContainerId));
+        runner.Invocations.Should().NotContain(invocation => invocation.Arguments.Contains(stoppedService.ContainerId));
+
+        var servicesDirectory = Path.Combine(storage.RootPath, storage.ServicesFolderName);
+        var stoppedLogPath = Path.Combine(servicesDirectory, $"{stoppedService.Name}.log");
+        File.Exists(stoppedLogPath).Should().BeFalse();
+    }
+
     private static ContainerLogCollector CreateCollector(
         IDockerServiceDetector detector,
         IProcessRunner processRunner,
