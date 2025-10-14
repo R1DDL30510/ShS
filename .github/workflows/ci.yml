@@ -26,6 +26,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
+          include-prerelease: true # net9.0 is currently in preview
 
       - name: Restore
         run: dotnet restore ShS.slnx
@@ -51,6 +52,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
+          include-prerelease: true # ensure preview builds are available for smoke job too
 
       - name: Ensure Docker is available
         run: docker version
