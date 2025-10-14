@@ -1,10 +1,7 @@
-using System.IO;
-using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Configuration;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Infrastructure;
 using SecureHomeSystem.Services;
@@ -20,11 +17,30 @@ namespace SecureHomeSystem;
 public static class Program
 {
     /// <summary>
-    /// Builds the default host, binds configuration sections to options, and exposes
-    /// `/health` and `/live` endpoints alongside the orchestrator worker.
+    /// Builds the web application host, runs it, and ensures Serilog flushes buffers
+    /// during shutdown.
     /// </summary>
     /// <param name="args">Command-line arguments forwarded by the hosting infrastructure.</param>
     public static void Main(string[] args)
+    {
+        var app = BuildWebApplication(args);
+
+        try
+        {
+            app.Run();
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
+
+    /// <summary>
+    /// Configures and builds the ASP.NET Core web application for hosting the worker.
+    /// Tests call this method to verify service registration without starting Kestrel.
+    /// </summary>
+    /// <param name="args">Command-line arguments forwarded by the hosting infrastructure.</param>
+    internal static WebApplication BuildWebApplication(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -43,11 +59,15 @@ public static class Program
         builder.Services.Configure<LogStorageOptions>(builder.Configuration.GetSection("LogStorage"));
         builder.Services.Configure<LogCollectorOptions>(builder.Configuration.GetSection("LogCollector"));
 
-        var healthOptions = builder.Configuration.GetSection("Health").Get<HealthOptions>() ?? new();
+        var configuration = builder.Configuration;
+        var healthOptions = configuration.GetSection("Health").Get<HealthOptions>() ?? new();
+        var logCollectorOptions = configuration.GetSection("LogCollector").Get<LogCollectorOptions>() ?? new();
+        var logStorageOptions = configuration.GetSection("LogStorage").Get<LogStorageOptions>() ?? new();
+
+        EnsureLogDirectories(logStorageOptions);
+
         var healthPath = NormalizePath(healthOptions.HealthPath, "/health");
         var livenessPath = NormalizePath(healthOptions.LivenessPath, "/live");
-
-        EnsureLogDirectories(builder.Configuration);
 
         builder.Services
             .AddHealthChecks()
@@ -57,8 +77,7 @@ public static class Program
         builder.Services.AddSingleton<IDockerServiceDetector, DockerServiceDetector>();
         builder.Services.AddHostedService<Worker>();
 
-        var logCollectorOptions = builder.Configuration.GetSection("LogCollector").Get<LogCollectorOptions>();
-        if (logCollectorOptions is null || logCollectorOptions.Enabled)
+        if (logCollectorOptions.Enabled)
         {
             builder.Services.AddHostedService<ContainerLogCollector>();
         }
@@ -68,46 +87,51 @@ public static class Program
             options.ListenAnyIP(healthOptions.Port);
         });
 
-        try
+        var app = builder.Build();
+
+        app.MapHealthChecks(healthPath);
+        app.MapGet(livenessPath, () => Results.Ok(new { status = "Healthy" }));
+
+        return app;
+    }
+
+    /// <summary>
+    /// Normalises user-provided paths by enforcing a single leading slash.
+    /// </summary>
+    /// <param name="candidate">Candidate path value supplied through configuration.</param>
+    /// <param name="fallback">Fallback path used when the candidate is null or whitespace.</param>
+    internal static string NormalizePath(string? candidate, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
         {
-            var app = builder.Build();
-
-            app.MapHealthChecks(healthPath);
-            app.MapGet(livenessPath, () => Results.Ok(new { status = "Healthy" }));
-
-            app.Run();
-        }
-        finally
-        {
-            Log.CloseAndFlush();
-        }
-
-        static string NormalizePath(string? candidate, string fallback)
-        {
-            if (string.IsNullOrWhiteSpace(candidate))
-            {
-                return fallback;
-            }
-
-            return candidate.StartsWith('/') ? candidate : $"/{candidate}";
+            return fallback;
         }
 
-        static void EnsureLogDirectories(IConfiguration configuration)
+        return candidate.StartsWith('/') ? candidate : $"/{candidate}";
+    }
+
+    /// <summary>
+    /// Ensures the worker's log directories exist prior to starting the host.
+    /// </summary>
+    /// <param name="options">Resolved storage options.</param>
+    internal static void EnsureLogDirectories(LogStorageOptions options)
+    {
+        if (string.IsNullOrWhiteSpace(options.RootPath))
         {
-            var options = configuration.GetSection("LogStorage").Get<LogStorageOptions>() ?? new();
+            return;
+        }
 
-            var directories = new[]
-            {
-                options.RootPath,
-                Path.Combine(options.RootPath, options.WorkerFolderName),
-                Path.Combine(options.RootPath, options.ServicesFolderName),
-                Path.Combine(options.RootPath, options.StateFolderName)
-            };
+        var directories = new[]
+        {
+            options.RootPath,
+            Path.Combine(options.RootPath, options.WorkerFolderName),
+            Path.Combine(options.RootPath, options.ServicesFolderName),
+            Path.Combine(options.RootPath, options.StateFolderName)
+        };
 
-            foreach (var directory in directories.Where(path => !string.IsNullOrWhiteSpace(path)))
-            {
-                Directory.CreateDirectory(directory);
-            }
+        foreach (var directory in directories.Where(path => !string.IsNullOrWhiteSpace(path)))
+        {
+            Directory.CreateDirectory(directory);
         }
     }
 }

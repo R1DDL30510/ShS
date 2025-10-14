@@ -1,10 +1,6 @@
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Infrastructure;
@@ -214,54 +210,70 @@ public sealed class ContainerLogCollector : BackgroundService
 
         var logPath = Path.Combine(_servicesDirectory, $"{service.Name}.log");
 
-        await using var stream = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, useAsync: true);
-        await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
+        var stream = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.Read, 4096, useAsync: true);
+        StreamWriter? writer = null;
 
-        var appended = 0;
-        var maxTimestamp = lastCursor;
-
-        foreach (var line in lines)
+        try
         {
-            var separatorIndex = line.IndexOf(' ');
-            if (separatorIndex <= 0)
+            writer = new StreamWriter(stream, new UTF8Encoding(false));
+
+            var appended = 0;
+            var maxTimestamp = lastCursor;
+
+            foreach (var line in lines)
             {
-                continue;
+                var separatorIndex = line.IndexOf(' ');
+                if (separatorIndex <= 0)
+                {
+                    continue;
+                }
+
+                var timestampSegment = line[..separatorIndex];
+                if (!DateTimeOffset.TryParse(timestampSegment, out var timestamp))
+                {
+                    continue;
+                }
+
+                if (lastCursor.HasValue && timestamp <= lastCursor.Value)
+                {
+                    continue;
+                }
+
+                var message = line[(separatorIndex + 1)..];
+
+                var record = new ContainerLogRecord
+                {
+                    Timestamp = timestamp,
+                    Service = service.Name,
+                    ContainerId = service.ContainerId,
+                    Message = message
+                };
+
+                var json = JsonSerializer.Serialize(record, SerializerOptions);
+                await writer.WriteLineAsync(json.AsMemory(), cancellationToken).ConfigureAwait(false);
+
+                appended++;
+                if (!maxTimestamp.HasValue || timestamp > maxTimestamp.Value)
+                {
+                    maxTimestamp = timestamp;
+                }
             }
 
-            var timestampSegment = line[..separatorIndex];
-            if (!DateTimeOffset.TryParse(timestampSegment, out var timestamp))
+            await writer.FlushAsync().ConfigureAwait(false);
+
+            return (appended, maxTimestamp ?? lastCursor ?? DateTimeOffset.UtcNow);
+        }
+        finally
+        {
+            if (writer is not null)
             {
-                continue;
+                await writer.DisposeAsync().ConfigureAwait(false);
             }
-
-            if (lastCursor.HasValue && timestamp <= lastCursor.Value)
+            else
             {
-                continue;
-            }
-
-            var message = line[(separatorIndex + 1)..];
-
-            var record = new ContainerLogRecord
-            {
-                Timestamp = timestamp,
-                Service = service.Name,
-                ContainerId = service.ContainerId,
-                Message = message
-            };
-
-            var json = JsonSerializer.Serialize(record, SerializerOptions);
-            await writer.WriteLineAsync(json.AsMemory(), cancellationToken).ConfigureAwait(false);
-
-            appended++;
-            if (!maxTimestamp.HasValue || timestamp > maxTimestamp.Value)
-            {
-                maxTimestamp = timestamp;
+                await stream.DisposeAsync().ConfigureAwait(false);
             }
         }
-
-        await writer.FlushAsync().ConfigureAwait(false);
-
-        return (appended, maxTimestamp ?? lastCursor ?? DateTimeOffset.UtcNow);
     }
 
     private void EnforceLogRetention(DetectedService service)

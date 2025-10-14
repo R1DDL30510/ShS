@@ -1,4 +1,3 @@
-using System.Linq;
 using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Infrastructure;
