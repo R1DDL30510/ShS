@@ -8,7 +8,7 @@
 ## Quick Start
 ```powershell
 cd docker
-# create .env if overrides (paths, ports, GPU selection) are needed
+# create .env if overrides (paths, ports, GPU selection, log storage) are needed
 docker compose --profile worker up -d --build
 docker compose --profile diffusion up -d   # Stable Diffusion optional
 ```
@@ -28,6 +28,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 
 ## Volumes
 - Data root: `../data` relative to the repo (`open-webui`, `qdrant`, `automatic1111`).
+- Logs: `${LOG_DIR:-../data/logs}` on the host is mounted to `/logs` for worker JSON output and harvested container logs.
 - Models: `../models/stable-diffusion` holds AUTOMATIC1111 checkpoints.
 - Workspace: `../stablediff/stable-diffusion-webui` (when present) is mounted read-only for patch scripts.
 
@@ -37,7 +38,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 - OpenWebUI: `curl http://localhost:3003/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111 (when the `diffusion` profile is active): `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
-- The worker logs detected services every 30 seconds (`docker compose logs shs-worker`).
+- The worker logs detected services every 30 seconds (`docker compose logs shs-worker`) and persists structured entries under `/logs/worker` inside the container (`LOG_DIR` on the host).
 
 ## Checkpoints
 1. **Checkpoint 1 – Ollama/OpenWebUI**  

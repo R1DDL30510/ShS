@@ -6,9 +6,11 @@
 - `Get-Service Ollama` in PowerShell confirms the native Ollama service.
 
 ## Logs
-- Worker: `docker compose -f docker/compose.yaml logs shs-worker`. ?? Windows Event Log forwarding is **not** configured in the current worker build; revise this guidance if native Windows service hosting is introduced.
-- OpenWebUI: `docker logs shs-stack-open-webui-1`.
-- Stable Diffusion: `docker logs shs-stack-automatic1111-1`.
+- Worker (live stream): `docker compose -f docker/compose.yaml logs shs-worker`.
+- Worker (persistent JSON): `${LOG_DIR:-../data/logs}/worker/worker-<date>.json` (PowerShell helper: `Get-Content -Path (Join-Path $PWD '..\data\logs\worker\worker-*.json') -Wait` when using the default path).
+- Service archives: `${LOG_DIR:-../data/logs}/services/<service>.log` contains the last harvested stdout per container (rotated by cursor).
+- OpenWebUI (live): `docker logs shs-stack-open-webui-1`.
+- Stable Diffusion (live): `docker logs shs-stack-automatic1111-1`.
 
 ## Restart Policy
 - Restart a single service: `docker compose -f docker/compose.yaml restart <service>`.
@@ -25,6 +27,7 @@
 - `docker/.env` defines host paths for volumes.
 - Persistent data lives under `data/open-webui`, `data/qdrant`, `data/automatic1111`.
 - Model cache resides in `models/stable-diffusion`.
+- Logs persist under `${LOG_DIR:-../data/logs}` with subfolders `worker`, `services`, and `state`.
 
 ## Common Issues
 - **Permission denied** during `git add`: close Visual Studio or keep `.vs/` ignored.

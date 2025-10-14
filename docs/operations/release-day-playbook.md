@@ -9,7 +9,7 @@
 | T-7 | Projektüberblick auffrischen, Präsentationsoutline mit Stakeholdern abgleichen. | `docs/presentation/presentation-outline.md` (Slides 1–5) |
 | T-5 | Compose-Stack lokal durchstarten, offene Labels prüfen. | `docker/compose.yaml`, `SecureHomeSystem/Configuration/DockerOptions.cs` |
 | T-4 | GPU-Policy verifizieren, ggf. Limits aktualisieren. | `docs/operations/gpu-policy.md`, `SecureHomeSystem/Configuration/ResourceSchedulerOptions.cs` |
-| T-3 | Demo-Skript entwerfen und Worker-Logs mitschneiden. | `SecureHomeSystem/Worker.cs`, `docs/operations/runbook.md` |
+| T-3 | Demo-Skript entwerfen und Worker-Logs aus `/logs/worker` mitschneiden. | `SecureHomeSystem/Worker.cs`, `docs/operations/runbook.md` |
 | T-2 | Release-Flags evaluieren und Status in Präsentation aufnehmen. | `README.md` → Abschnitt **Revision Flags** |
 | T-1 | End-to-End-Probelauf inkl. Screenshot-Erstellung. | `docs/presentation/presentation-outline.md` → Screenshot-Hinweise |
 
@@ -29,6 +29,7 @@
 4. **Worker überwachen**
    - `docker compose -f docker/compose.yaml logs -f shs-worker`.
    - Erwartete Logzeile: _"Detected service open-webui | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
+   - Prüfe die persistente Datei `${LOG_DIR:-../data/logs}/worker/worker-<Datum>.json` sowie die Cursor-Schnappschüsse unter `${LOG_DIR:-../data/logs}/state`.
 5. **Health Checks bestätigen**
    - `curl http://localhost:5080/health` (Worker Health).
    - `curl http://localhost:3003/api/system/info` (OpenWebUI).
@@ -67,6 +68,7 @@
 | --- | --- | --- |
 | 🟡 `testing-gap` | Keine automatisierten Tests. | Während Q&A proaktiv adressieren, Contribution-Aufruf wiederholen. |
 | 🟠 `gpu-policy-automation` | Enforcement fehlt. | Manuellen Prozess im Runbook betonen, Verantwortliche im Betrieb nennen. |
+| ??  `logging-analytics` | Zentrale Logs liegen als Dateien vor; Query- und Alerting-Layer fehlt. | Neue Ablage unter `${LOG_DIR}` hervorheben und Anforderungen für Loki/Elastic sammeln. | 
 | 🔵 `documentation-sync` | Präsentationsinhalte ↔ README konsistent halten. | Nach jedem Merge `docs/presentation/presentation-outline.md` prüfen. |
 
 Aktualisiere diese Tabelle, sobald ein Flag erledigt ist. Nutze farbige Emojis, damit der Status auf den ersten Blick erkennbar ist.

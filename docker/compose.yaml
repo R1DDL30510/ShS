@@ -14,6 +14,7 @@ services:
       - ASPNETCORE_URLS=http://0.0.0.0:5080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${LOG_DIR:-../data/logs}:/logs
     ports:
       - "${WORKER_HEALTH_PORT:-5080}:5080"
     healthcheck:

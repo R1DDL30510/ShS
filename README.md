@@ -19,8 +19,9 @@ Compose labels (`shs.role`) allow the worker to correlate running containers wit
 - **Docker-aware orchestration** - Detects labelled containers via the Docker CLI, surfaces status telemetry, and gracefully handles CLI failures or cancellation.
 - **Configurable service endpoints** - Centralised options objects define base URLs, GPU thresholds, and health probes for Ollama, OpenWebUI, and Stable Diffusion services.
 - **HTTP health endpoints** - `/health` and `/live` routes expose the worker's status for Compose health checks and external monitoring.
+- **Centralised log capture** - Serilog records worker events as JSON under `/logs/worker` while a background collector persists container stdout streams per service in `/logs/services`, anchored by cursor files in `/logs/state`.
 - **GPU policy configuration** - Resource scheduler thresholds are captured in configuration for future automation while operations teams continue to enforce limits manually.
-- **Operational guidance** – Runbooks document log locations, restart procedures, health checks, and escalation paths for production operations.
+- **Operational guidance** - Runbooks document log locations, restart procedures, health checks, and escalation paths for production operations.
 
 ## Prerequisites
 - [.NET SDK 9.0](https://dotnet.microsoft.com/) for local builds of the worker service.
@@ -50,10 +51,16 @@ Runtime settings live in `SecureHomeSystem/appsettings.json` and can be overridd
 
 Refer to `docs/reference/configuration.md` for the full parameter reference and defaults, including the nested detection settings under `Docker:Detection` and service endpoint overrides.
 
+## Logging & Observability
+- Worker telemetry is stored as rolling JSON files at `/logs/worker/worker-<date>.json`. Files rotate daily (or at 10 MB) and retain the last 14 segments by default.
+- Container stdout is captured by `ContainerLogCollector` into `/logs/services/<service>.log`, with per-service cursors persisted under `/logs/state/<service>.cursor` to avoid duplicates across restarts.
+- Override the host-side mount with the `LOG_DIR` environment variable (default `../data/logs`) in `docker/.env`; the Compose file binds this directory into the worker container as `/logs`.
+- Quick triage still benefits from `docker compose -f docker/compose.yaml logs -f shs-worker`, but use the persisted files for audit trails, comparisons across restarts, and feeding future automated tests.
+
 ## Operations
 - **Status checks:** `docker compose -f docker/compose.yaml ls` and `docker ps --filter label=shs.role` to confirm container health.
 - **Worker health:** `curl http://localhost:5080/health` (customise with `WORKER_HEALTH_PORT`) for an HTTP 200 response.
-- **Logs:** Use `docker compose -f docker/compose.yaml logs shs-worker` or service-specific `docker logs` commands for troubleshooting.
+- **Logs:** Tail `/logs/worker/worker-*.json` for structured worker events or inspect `/logs/services/<service>.log` for container stdout snapshots; use `docker compose -f docker/compose.yaml logs` for live streaming when needed.
 - **Restarts:** Target a single service with `docker compose restart <service>` or recycle the full stack with `down`/`up -d`.
 - **GPU management:** Follow the GPU policy guidance to maintain VRAM caps and queue behaviour during contention.
 - **Release readiness:** Consult `docs/operations/release-day-playbook.md` for the day-of checklist, demo script, and revision
@@ -67,8 +74,8 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 ## Repository Structure
 ```
 SecureHomeSystem/      # .NET worker service source, options, and hosted worker
-  Configuration/      # Strongly typed options for Docker, services, and scheduling
-  Services/           # Docker detection abstraction and implementation
+  Configuration/      # Strongly typed options for Docker, services, logging, and scheduling
+  Services/           # Docker detection abstraction and container log collector
   Models/             # Data contracts for detected services
   Dockerfile          # Multi-stage build for the worker container
   appsettings.json    # Default runtime configuration
@@ -93,3 +100,4 @@ Operational issues and feature proposals should be tracked via the repository is
 ## Revision Flags
 - ⚠️ **Automated testing** – No unit or integration tests exist. Add coverage or revise the workflow guidance when tests are available.
 - ⚠️ **GPU policy automation** – Resource limits are advisory only. Refresh the GPU policy docs after enforcement logic ships.
+- ?? **Log analytics** - Logs now persist under  `/logs`, but no indexing or alerting layer consumes them yet. Revisit once a Loki/Elastic/Promtail integration is prioritised. 

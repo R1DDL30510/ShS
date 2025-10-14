@@ -74,9 +74,10 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 - **Screenshot placeholder:** `[[Screenshot: appsettings.json in IDE]]`  
   - Highlight relevant sections (Docker, Services, ResourceScheduler) with IDE syntax highlighting.
 
-## Slide 11 – Operations & Runbook
+## Slide 11 - Operations & Runbook
 - Reference procedures in `docs/operations/runbook.md` (status checks, restarts, troubleshooting).
 - Mention GPU policy coordination (`docs/operations/gpu-policy.md`).
+- Call out zentrale Log-Ablage (`/logs/worker`, `/logs/services`, Cursor unter `/logs/state`) und wie Operatoren darauf zugreifen.
 - Emphasize manual enforcement of GPU guardrails (revision flag).
 - **Screenshot placeholder:** `[[Screenshot: Runbook markdown rendered]]`  
   - Use the IDE markdown preview or a documentation site rendering to illustrate operator guidance.
@@ -99,10 +100,10 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 
 ## Slide 14 – Risks, Flags & Follow-Up Actions
 - Present outstanding items to verify before publication:
-  - Keine automatisierten Tests (`README.md` – Abschnitt **Revision Flags**).
-  - GPU-Policy-Automatisierung steht noch aus (`README.md` – Abschnitt **Revision Flags**, `docs/operations/gpu-policy.md`).
-  - Windows Event Log Forwarding weiterhin offen (`docs/operations/runbook.md` – Abschnitt **Logs**).
-  - GPU-Dokumentation für Limits aktualisieren (`docs/setup/docker-compose.md` – Abschnitt **GPU Limits**).
+  - Keine automatisierten Tests (`README.md` - Abschnitt **Revision Flags**).
+  - GPU-Policy-Automatisierung steht noch aus (`README.md` - Abschnitt **Revision Flags**, `docs/operations/gpu-policy.md`).
+  - Zentrale Logs liegen als Dateien vor; es fehlt weiterhin eine Query-/Alerting-Schicht (`README.md` - Abschnitt **Logging & Observability**).
+  - GPU-Dokumentation für Limits aktualisieren (`docs/setup/docker-compose.md` - Abschnitt **GPU Limits**).
 - Suggest owner assignment and timelines to resolve each flag.
 - **Screenshot placeholder:** `[[Screenshot: Issue tracker board highlighting follow-ups]]`  
   - Use your preferred tracker (GitHub Projects, Jira) to display tasks mapped to each flag.

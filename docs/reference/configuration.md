@@ -42,3 +42,21 @@ The worker loads configuration from `SecureHomeSystem/appsettings.json`, with ov
 - `Port` (`int`): TCP port bound by the worker for health and liveness endpoints. Default: `5080`.
 - `HealthPath` (`string`): Path exposed via ASP.NET Core health checks, consumed by the Compose health probe. Default: `/health`.
 - `LivenessPath` (`string`): Minimal JSON endpoint for quick manual checks. Default: `/live`.
+
+## `Serilog`
+- `Using` (`string[]`): Assemblies that expose configured sinks. Defaults include `Serilog.Sinks.Console` and `Serilog.Sinks.File`.
+- `MinimumLevel` (`object`): Baseline log level plus overrides for namespaces. Default logs Microsoft categories at `Warning` while keeping the app at `Information`.
+- `WriteTo[0]` (`Console`): Streams logs to standard output for Docker logs integration.
+- `WriteTo[1]` (`File`): Persists JSON-formatted worker logs to `/logs/worker/worker-.json`. Rotation policy keeps 14 files, rolls daily or at 10 MB.
+- `Properties:Application` (`string`): Static property stamped on every log event. Default: `SecureHomeSystem.Worker`.
+
+## `LogStorage`
+- `RootPath` (`string`): Base directory for all persisted logs and cursors. Default: `/logs` (mapped from `${LOG_DIR}` in Compose).
+- `WorkerFolderName` (`string`): Subdirectory for Serilog output. Default: `worker`.
+- `ServicesFolderName` (`string`): Subdirectory for harvested container logs. Default: `services`.
+- `StateFolderName` (`string`): Subdirectory for per-service cursor files. Default: `state`.
+
+## `LogCollector`
+- `Enabled` (`bool`): Toggle for the docker log harvester. Default: `true`.
+- `PollIntervalSeconds` (`int`): Delay between collection passes. Default: `30`.
+- `InitialLookbackMinutes` (`int`): How far back to fetch logs on the first run when no cursor exists. Default: `10`.
