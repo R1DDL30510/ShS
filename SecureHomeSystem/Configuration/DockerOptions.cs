@@ -3,32 +3,33 @@ namespace SecureHomeSystem.Configuration;
 public sealed class DockerOptions
 {
     /// <summary>
-    /// Relative path to the Compose file the worker references when surfacing
-    /// operational commands. Defaults to the repository-managed stack definition.
+    /// Relativer Pfad zur Compose-Datei, auf die sich der Worker bei betrieblichen
+    /// Hinweisen bezieht. Standardmäßig verweist sie auf die im Repository gepflegte
+    /// Stack-Definition.
     /// </summary>
     public string ComposeFilePath { get; set; } = "docker/compose.yaml";
 
     /// <summary>
-    /// Location of the Compose environment file. Operators customise host-specific
-    /// paths and credentials here during release rehearsals.
+    /// Speicherort der Compose-Umgebungsdatei. Betreiber:innen passen hier während
+    /// Release-Probeläufen host-spezifische Pfade und Zugangsdaten an.
     /// </summary>
     public string EnvironmentFile { get; set; } = "docker/.env";
 
     /// <summary>
-    /// Compose project name used to group containers. Keep this stable so screenshots
-    /// and command snippets remain accurate over time.
+    /// Compose-Projektname zur Gruppierung der Container. Stabil halten, damit
+    /// Screenshots und Befehls-Snippets langfristig korrekt bleiben.
     /// </summary>
     public string ProjectName { get; set; } = "shs-stack";
 
     /// <summary>
-    /// Profiles automatically enabled when the worker orchestrates the stack. The
-    /// default list is empty because automation is not yet wired; documentation still
-    /// references the intended values.
+    /// Profile, die der Worker beim Orchestrieren des Stacks automatisch aktiviert.
+    /// Standardmäßig ist die Liste leer, weil die Automatisierung noch nicht
+    /// verdrahtet ist; die Dokumentation verweist dennoch auf die Zielwerte.
     /// </summary>
     public string[] AutoStartProfiles { get; set; } = Array.Empty<string>();
 
     /// <summary>
-    /// Detection settings that map Docker labels to logical service names.
+    /// Erkennungseinstellungen, die Docker-Labels logischen Dienstnamen zuordnen.
     /// </summary>
     public ServiceDetectionOptions Detection { get; set; } = new();
 }
@@ -50,9 +51,9 @@ public sealed class ServiceDetectionOptions
     };
 
     /// <summary>
-    /// Dictionary linking logical service identifiers to required Docker labels. Match
-    /// these values with the <c>labels</c> defined in <c>docker/compose.yaml</c> when new
-    /// services are added to the stack.
+    /// Wörterbuch, das logische Dienstschlüssel mit den erforderlichen Docker-Labels
+    /// verbindet. Die Werte müssen zu den in <c>docker/compose.yaml</c> definierten
+    /// <c>labels</c> passen, sobald der Stack erweitert wird.
     /// </summary>
     public Dictionary<string, string> LabelSelector
     {
@@ -63,9 +64,9 @@ public sealed class ServiceDetectionOptions
     }
 
     /// <summary>
-    /// Friendly service names surfaced in worker logs. Defaults keep the
-    /// OpenWebUI container branded as HomeChatGPT without renaming Compose
-    /// services, avoiding merge conflicts with upstream changes.
+    /// Nutzerfreundliche Servicenamen, die der Worker in Logs ausgibt. Die
+    /// Standardwerte halten das HomeChatGPT-Branding für den OpenWebUI-Container,
+    /// ohne Compose-Services umzubenennen – so bleiben Upstream-Merges konfliktfrei.
     /// </summary>
     public Dictionary<string, string> FriendlyNames
     {
@@ -76,13 +77,13 @@ public sealed class ServiceDetectionOptions
     }
 
     /// <summary>
-    /// Grace period (in seconds) allowed for a container to appear during startup.
+    /// Kulanzfenster (in Sekunden), das ein Container während des Starts erhält.
     /// </summary>
     public int StartupTimeoutSeconds { get; set; } = 120;
 
     /// <summary>
-    /// Number of retries before the worker marks detection as failed. Use this during
-    /// release planning to gauge how resilient the detection loop should be.
+    /// Anzahl der Versuche, bevor der Worker die Erkennung als fehlgeschlagen markiert.
+    /// Hilft bei der Release-Planung, die gewünschte Robustheit der Schleife festzulegen.
     /// </summary>
     public int RetryCount { get; set; } = 3;
 }

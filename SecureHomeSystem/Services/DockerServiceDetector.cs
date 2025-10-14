@@ -12,9 +12,9 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
     private readonly ILogger<DockerServiceDetector> _logger;
 
     /// <summary>
-    /// Binds configuration and logger dependencies for the detector. All constructor
-    /// parameters are resolved by the hosting container; no additional setup is required
-    /// when the worker is run via <c>docker compose</c>.
+    /// Bindet Konfigurations- und Logger-Abhängigkeiten für den Detektor. Sämtliche
+    /// Parameter werden vom Hosting-Container aufgelöst; zusätzliche Einrichtung ist
+    /// nicht nötig, wenn der Worker über <c>docker compose</c> läuft.
     /// </summary>
     public DockerServiceDetector(IOptions<DockerOptions> options, ILogger<DockerServiceDetector> logger)
     {
@@ -23,10 +23,11 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
     }
 
     /// <summary>
-    /// Executes a <c>docker ps</c> command and maps labelled containers to logical services.
-    /// The method returns a stable snapshot that the worker logs for observability.
+    /// Führt <c>docker ps</c> aus und ordnet gelabelte Container den logischen Diensten zu.
+    /// Die Methode liefert einen stabilen Schnappschuss, den der Worker zur Beobachtbarkeit
+    /// protokolliert.
     /// </summary>
-    /// <param name="cancellationToken">Token used to abort the CLI invocation during shutdown.</param>
+    /// <param name="cancellationToken">Token, das den CLI-Aufruf beim Herunterfahren abbricht.</param>
     public async Task<IReadOnlyCollection<DetectedService>> DetectAsync(CancellationToken cancellationToken)
     {
         var detected = new List<DetectedService>();
@@ -46,7 +47,7 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
             using var process = Process.Start(processStartInfo);
             if (process is null)
             {
-                _logger.LogWarning("Unable to start docker CLI process for service detection.");
+                _logger.LogWarning("Docker-CLI-Prozess für die Diensterkennung konnte nicht gestartet werden.");
                 return detected;
             }
 
@@ -59,14 +60,14 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
 
             if (process.ExitCode != 0)
             {
-                _logger.LogWarning("Docker CLI returned non-zero exit code {ExitCode}. stderr: {StdErr}", process.ExitCode, stderr);
+                _logger.LogWarning("Docker-CLI lieferte Exitcode {ExitCode} ungleich null. stderr: {StdErr}", process.ExitCode, stderr);
                 return detected;
             }
 
             var selectorMap = _options.Detection.LabelSelector;
             if (selectorMap.Count == 0)
             {
-                _logger.LogInformation("No docker label selectors configured; skipping detection.");
+                _logger.LogInformation("Keine Docker-Label-Selektoren konfiguriert – Erkennung wird übersprungen.");
                 return detected;
             }
 
@@ -112,11 +113,11 @@ public sealed class DockerServiceDetector : IDockerServiceDetector
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("Docker service detection cancelled.");
+            _logger.LogWarning("Docker-Diensterkennung abgebrochen.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to detect docker services.");
+            _logger.LogError(ex, "Docker-Dienste konnten nicht erkannt werden.");
         }
 
         return detected;

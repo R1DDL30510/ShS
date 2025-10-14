@@ -7,9 +7,9 @@ namespace SecureHomeSystem;
 public class Worker : BackgroundService
 {
     /// <summary>
-    /// Delay between discovery passes. The interval is intentionally short so that
-    /// release-day demos surface container state changes almost immediately while
-    /// remaining conservative enough for production logging volumes.
+    /// Pause zwischen den Erkennungsläufen. Das Intervall ist bewusst kurz gewählt,
+    /// damit sich Containerzustände in Releasetag-Demos nahezu live zeigen lassen und
+    /// gleichzeitig das Produktionslogvolumen im Rahmen bleibt.
     /// </summary>
     private static readonly TimeSpan DetectionInterval = TimeSpan.FromSeconds(30);
 
@@ -18,9 +18,10 @@ public class Worker : BackgroundService
     private readonly ServiceEndpointsOptions _serviceEndpoints;
 
     /// <summary>
-    /// Creates a worker instance with dependencies resolved through DI. The constructor
-    /// caches the <see cref="ServiceEndpointsOptions"/> snapshot because the worker only
-    /// logs endpoint metadata and does not require runtime refreshes.
+    /// Erstellt eine Worker-Instanz mit über Dependency Injection aufgelösten Abhängigkeiten.
+    /// Der Konstruktor puffert den <see cref="ServiceEndpointsOptions"/>-Schnappschuss, da
+    /// der Worker lediglich Endpunktmetadaten protokolliert und keine Laufzeitaktualisierung
+    /// benötigt.
     /// </summary>
     public Worker(
         ILogger<Worker> logger,
@@ -33,16 +34,16 @@ public class Worker : BackgroundService
     }
 
     /// <summary>
-    /// Main execution loop for the background service. On startup the worker records
-    /// configured endpoints so presenters can quickly point stakeholders to deployed
-    /// URLs. It then repeatedly triggers Docker discovery until cancellation is
-    /// requested, spacing each pass by <see cref="DetectionInterval"/>.
+    /// Hauptschleife des Hintergrunddienstes. Beim Start protokolliert der Worker die
+    /// konfigurierten Endpunkte, damit Moderator:innen Stakeholder sofort auf bereitgestellte
+    /// URLs verweisen können. Anschließend stößt er fortlaufend die Docker-Erkennung an,
+    /// bis eine Beendigung angefordert wird, und wartet jeweils <see cref="DetectionInterval"/>.
     /// </summary>
-    /// <param name="stoppingToken">Token propagated by the host during shutdown.</param>
+    /// <param name="stoppingToken">Token, das der Host beim Herunterfahren propagiert.</param>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "SecureHomeSystem worker initialised. {OllamaName}: {OllamaUrl}, {WebUiName}: {OpenWebUiUrl}, {StableDiffusionName}: {StableDiffusionUrl}",
+            "SecureHomeSystem-Worker initialisiert. {OllamaName}: {OllamaUrl}, {WebUiName}: {OpenWebUiUrl}, {StableDiffusionName}: {StableDiffusionUrl}",
             _serviceEndpoints.Ollama.DisplayName,
             _serviceEndpoints.Ollama.BaseUrl,
             _serviceEndpoints.OpenWebUi.DisplayName,
@@ -66,19 +67,19 @@ public class Worker : BackgroundService
     }
 
     /// <summary>
-    /// Invokes the injected <see cref="IDockerServiceDetector"/> and emits structured log
-    /// entries for each managed service. The method favours observability over mutation;
-    /// it never alters container state so that release rehearsals can be safely run on
-    /// production-like environments.
+    /// Ruft den injizierten <see cref="IDockerServiceDetector"/> auf und schreibt strukturierte
+    /// Logeinträge für jeden verwalteten Dienst. Beobachtbarkeit steht über Mutationen – der
+    /// Worker verändert keinen Containerzustand, damit sich Release-Proben sicher in
+    /// produktionsnahen Umgebungen durchführen lassen.
     /// </summary>
-    /// <param name="cancellationToken">Token used to abort detection when the host shuts down.</param>
+    /// <param name="cancellationToken">Token, das die Erkennung bei einem Host-Shutdown abbricht.</param>
     private async Task DetectDockerServicesAsync(CancellationToken cancellationToken)
     {
         var services = await _dockerServiceDetector.DetectAsync(cancellationToken).ConfigureAwait(false);
 
         if (services.Count == 0)
         {
-            _logger.LogInformation("No managed docker services detected.");
+            _logger.LogInformation("Keine verwalteten Docker-Dienste erkannt.");
             return;
         }
 
@@ -87,7 +88,7 @@ public class Worker : BackgroundService
             var shortId = service.ContainerId.Length > 12 ? service.ContainerId[..12] : service.ContainerId;
 
             _logger.LogInformation(
-                "Detected service {ServiceName} | Container {ContainerId} | Image {Image} | Status {Status} | Running {IsRunning}",
+                "Dienst erkannt {ServiceName} | Container {ContainerId} | Image {Image} | Status {Status} | Läuft {IsRunning}",
                 service.DisplayName,
                 shortId,
                 service.Image,

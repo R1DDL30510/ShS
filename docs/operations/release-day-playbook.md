@@ -28,7 +28,7 @@
    - Optionales Diffusion-Profil aktivieren: `docker compose --profile diffusion up -d automatic1111`.
 4. **Worker überwachen**
    - `docker compose -f docker/compose.yaml logs -f shs-worker`.
-   - Erwartete Logzeile: _"Detected service HomeChatGPT | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
+   - Erwartete Logzeile: _"Dienst erkannt HomeChatGPT | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
 5. **Health Checks bestätigen**
    - `curl http://localhost:3003/api/system/info` (HomeChatGPT/OpenWebUI).
    - `curl -X POST http://localhost:7860/sdapi/v1/txt2img ...` (Stable-Diffusion-Smoke-Test – Prompt steht in `SecureHomeSystem/Configuration/ServiceEndpointsOptions.cs`).

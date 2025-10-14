@@ -4,19 +4,19 @@ using SecureHomeSystem.Services;
 namespace SecureHomeSystem
 {
     /// <summary>
-    /// Entry point for the SecureHomeSystem worker host. The bootstrapper wires up
-    /// strongly typed configuration objects and registers hosted services so that
-    /// the <see cref="Worker"/> background service can orchestrate managed containers.
+    /// Einstiegspunkt für den SecureHomeSystem-Worker-Host. Das Bootstrapper-Setup
+    /// verdrahtet stark typisierte Konfigurationsobjekte und registriert gehostete
+    /// Dienste, damit der <see cref="Worker"/> die verwalteten Container orchestrieren kann.
     /// </summary>
     public class Program
     {
         /// <summary>
-        /// Builds the default host, binds configuration sections to options, and
-        /// starts the hosted worker service. This method mirrors the setup carried
-        /// out by <c>dotnet new worker</c> but adds the bespoke configuration objects
-        /// required by the SecureHomeSystem stack.
+        /// Erstellt den Standard-Host, bindet Konfigurationsabschnitte an Optionsobjekte
+        /// und startet den gehosteten Worker-Dienst. Die Methode orientiert sich an
+        /// <c>dotnet new worker</c>, erweitert das Grundgerüst jedoch um die spezifischen
+        /// Konfigurationen des SecureHomeSystem-Stacks.
         /// </summary>
-        /// <param name="args">Command-line arguments forwarded by the hosting infrastructure.</param>
+        /// <param name="args">Kommandozeilenargumente, die die Hosting-Infrastruktur weiterreicht.</param>
         public static void Main(string[] args)
         {
             var builder = Host.CreateApplicationBuilder(args);
