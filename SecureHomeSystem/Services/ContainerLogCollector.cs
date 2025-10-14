@@ -1,5 +1,8 @@
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Hosting;
@@ -25,6 +28,7 @@ public sealed class ContainerLogCollector : BackgroundService
     private readonly IDockerServiceDetector _dockerServiceDetector;
     private readonly LogCollectorOptions _collectorOptions;
     private readonly LogStorageOptions _storageOptions;
+    private readonly LogRotationOptions _rotationOptions;
     private readonly TimeSpan _pollInterval;
     private readonly TimeSpan _initialLookback;
     private readonly string _servicesDirectory;
@@ -40,6 +44,7 @@ public sealed class ContainerLogCollector : BackgroundService
         _dockerServiceDetector = dockerServiceDetector;
         _collectorOptions = collectorOptions.Value;
         _storageOptions = storageOptions.Value;
+        _rotationOptions = _collectorOptions.Rotation ?? new();
 
         var rootPath = _storageOptions.RootPath;
         _servicesDirectory = Path.Combine(rootPath, _storageOptions.ServicesFolderName);
@@ -150,26 +155,28 @@ public sealed class ContainerLogCollector : BackgroundService
                     process.ExitCode,
                     service.Name,
                     stderr.Trim());
-                return;
-            }
-
-            var appended = await PersistLogLinesAsync(service, stdout, lastCursor, cancellationToken).ConfigureAwait(false);
-            if (appended.LastCursor.HasValue)
-            {
-                await WriteCursorAsync(cursorPath, appended.LastCursor.Value, cancellationToken).ConfigureAwait(false);
-            }
-
-            if (appended.AppendedCount > 0)
-            {
-                _logger.LogInformation(
-                    "Collected {Count} log entries for {Service} (container {Container}).",
-                    appended.AppendedCount,
-                    service.Name,
-                    service.ContainerId[..Math.Min(12, service.ContainerId.Length)]);
             }
             else
             {
-                _logger.LogDebug("No new log entries for {Service}.", service.Name);
+                var writeResult = await PersistLogLinesAsync(service, stdout, lastCursor, cancellationToken).ConfigureAwait(false);
+                if (writeResult.LastCursor.HasValue)
+                {
+                    lastCursor = writeResult.LastCursor.Value;
+                    await WriteCursorAsync(cursorPath, writeResult.LastCursor.Value, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (writeResult.AppendedCount > 0)
+                {
+                    _logger.LogInformation(
+                        "Collected {Count} log entries for {Service} (container {Container}).",
+                        writeResult.AppendedCount,
+                        service.Name,
+                        service.ContainerId[..Math.Min(12, service.ContainerId.Length)]);
+                }
+                else
+                {
+                    _logger.LogDebug("No new log entries for {Service}.", service.Name);
+                }
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -179,6 +186,10 @@ public sealed class ContainerLogCollector : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to collect logs for service {Service}.", service.Name);
+        }
+        finally
+        {
+            EnforceLogRetention(service);
         }
     }
 
@@ -251,6 +262,181 @@ public sealed class ContainerLogCollector : BackgroundService
         await writer.FlushAsync().ConfigureAwait(false);
 
         return (appended, maxTimestamp ?? lastCursor ?? DateTimeOffset.UtcNow);
+    }
+
+    private void EnforceLogRetention(DetectedService service)
+    {
+        if (_rotationOptions.MaxFileSizeBytes <= 0 &&
+            _rotationOptions.MaxFileAgeDays <= 0 &&
+            _rotationOptions.MaxArchiveFiles <= 0)
+        {
+            return;
+        }
+
+        var logPath = Path.Combine(_servicesDirectory, $"{service.Name}.log");
+        var directory = Path.GetDirectoryName(logPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        try
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            RotateIfNecessary(service, logPath, now);
+            PruneArchivedLogs(service, directory, Path.GetFileNameWithoutExtension(logPath), now);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to enforce log retention for {Service}.", service.Name);
+        }
+    }
+
+    private void RotateIfNecessary(DetectedService service, string logPath, DateTimeOffset now)
+    {
+        var fileInfo = new FileInfo(logPath);
+        if (!fileInfo.Exists)
+        {
+            return;
+        }
+
+        var reasons = new List<string>();
+
+        if (_rotationOptions.MaxFileSizeBytes > 0 &&
+            fileInfo.Length >= _rotationOptions.MaxFileSizeBytes)
+        {
+            reasons.Add($"size {fileInfo.Length}/{_rotationOptions.MaxFileSizeBytes} bytes");
+        }
+
+        if (_rotationOptions.MaxFileAgeDays > 0)
+        {
+            var age = now - new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero);
+            if (age >= TimeSpan.FromDays(_rotationOptions.MaxFileAgeDays))
+            {
+                var formattedAge = age.TotalDays.ToString("F1", CultureInfo.InvariantCulture);
+                reasons.Add($"age {formattedAge}d/{_rotationOptions.MaxFileAgeDays}d");
+            }
+        }
+
+        if (reasons.Count == 0)
+        {
+            return;
+        }
+
+        var directory = fileInfo.DirectoryName;
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        var baseName = Path.GetFileNameWithoutExtension(fileInfo.Name);
+        var suffix = now.ToString("yyyyMMdd'T'HHmmssfff'Z'", CultureInfo.InvariantCulture);
+        var archiveName = $"{baseName}-{suffix}.log";
+        var archivePath = Path.Combine(directory, archiveName);
+        var attempt = 1;
+
+        while (File.Exists(archivePath))
+        {
+            archiveName = $"{baseName}-{suffix}-{attempt}.log";
+            archivePath = Path.Combine(directory, archiveName);
+            attempt++;
+        }
+
+        File.Move(fileInfo.FullName, archivePath);
+
+        _logger.LogInformation(
+            "Rotated service log for {Service}. Archived as {Archive} ({Reason}).",
+            service.Name,
+            archiveName,
+            string.Join(", ", reasons));
+    }
+
+    private void PruneArchivedLogs(DetectedService service, string logDirectory, string baseName, DateTimeOffset now)
+    {
+        var hasAgeLimit = _rotationOptions.MaxFileAgeDays > 0;
+        var hasCountLimit = _rotationOptions.MaxArchiveFiles > 0;
+
+        if (!hasAgeLimit && !hasCountLimit)
+        {
+            return;
+        }
+
+        if (!Directory.Exists(logDirectory))
+        {
+            return;
+        }
+
+        var archives = Directory
+            .EnumerateFiles(logDirectory, $"{baseName}-*.log", SearchOption.TopDirectoryOnly)
+            .Select(path => new FileInfo(path))
+            .Where(file => file.Exists)
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .ToList();
+
+        if (archives.Count == 0)
+        {
+            return;
+        }
+
+        if (hasAgeLimit)
+        {
+            var cutoff = now - TimeSpan.FromDays(_rotationOptions.MaxFileAgeDays);
+            foreach (var archive in archives.ToList())
+            {
+                var lastWrite = new DateTimeOffset(archive.LastWriteTimeUtc, TimeSpan.Zero);
+                if (lastWrite < cutoff)
+                {
+                    try
+                    {
+                        archive.Delete();
+                        archives.Remove(archive);
+                        _logger.LogDebug(
+                            "Deleted expired service log archive {Archive} for {Service}.",
+                            archive.Name,
+                            service.Name);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Failed to delete expired log archive {Archive} for {Service}.",
+                            archive.FullName,
+                            service.Name);
+                    }
+                }
+            }
+        }
+
+        archives = archives
+            .Where(file => file.Exists)
+            .OrderByDescending(file => file.LastWriteTimeUtc)
+            .ToList();
+
+        if (hasCountLimit && archives.Count > _rotationOptions.MaxArchiveFiles)
+        {
+            foreach (var archive in archives
+                         .Skip(_rotationOptions.MaxArchiveFiles)
+                         .ToList())
+            {
+                try
+                {
+                    archive.Delete();
+                    _logger.LogDebug(
+                        "Deleted excess service log archive {Archive} for {Service}.",
+                        archive.Name,
+                        service.Name);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to delete excess log archive {Archive} for {Service}.",
+                        archive.FullName,
+                        service.Name);
+                }
+            }
+        }
     }
 
     private DateTimeOffset CalculateSince(DateTimeOffset? lastCursor)

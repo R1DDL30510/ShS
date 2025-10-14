@@ -53,7 +53,7 @@ Refer to `docs/reference/configuration.md` for the full parameter reference and 
 
 ## Logging & Observability
 - Worker telemetry is stored as rolling JSON files at `/logs/worker/worker-<date>.json`. Files rotate daily (or at 10 MB) and retain the last 14 segments by default.
-- Container stdout is captured by `ContainerLogCollector` into `/logs/services/<service>.log`, with per-service cursors persisted under `/logs/state/<service>.cursor` to avoid duplicates across restarts.
+- Container stdout is captured by `ContainerLogCollector` into `/logs/services/<service>.log`, with per-service cursors persisted under `/logs/state/<service>.cursor` to avoid duplicates across restarts. Logs rotate in-place when they reach 10 MB or 7 days, and the worker keeps up to five archives per service.
 - Override the host-side mount with the `LOG_DIR` environment variable (default `../data/logs`) in `docker/.env`; the Compose file binds this directory into the worker container as `/logs`.
 - Quick triage still benefits from `docker compose -f docker/compose.yaml logs -f shs-worker`, but use the persisted files for audit trails, comparisons across restarts, and feeding future automated tests.
 

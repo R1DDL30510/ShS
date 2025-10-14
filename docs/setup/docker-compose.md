@@ -28,7 +28,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 
 ## Volumes
 - Data root: `../data` relative to the repo (`open-webui`, `qdrant`, `automatic1111`).
-- Logs: `${LOG_DIR:-../data/logs}` on the host is mounted to `/logs` for worker JSON output and harvested container logs.
+- Logs: `${LOG_DIR:-../data/logs}` on the host is mounted to `/logs` for worker JSON output and harvested container logs (rotation thresholds live under `LogCollector:Rotation`).
 - Models: `../models/stable-diffusion` holds AUTOMATIC1111 checkpoints.
 - Workspace: `../stablediff/stable-diffusion-webui` (when present) is mounted read-only for patch scripts.
 

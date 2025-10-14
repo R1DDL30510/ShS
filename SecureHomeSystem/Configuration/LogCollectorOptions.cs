@@ -18,4 +18,9 @@ public sealed class LogCollectorOptions
     /// Value is expressed in minutes.
     /// </summary>
     public int InitialLookbackMinutes { get; set; } = 10;
+
+    /// <summary>
+    /// Retention configuration applied to per-service log files.
+    /// </summary>
+    public LogRotationOptions Rotation { get; set; } = new();
 }

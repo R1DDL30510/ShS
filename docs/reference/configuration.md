@@ -60,3 +60,7 @@ The worker loads configuration from `SecureHomeSystem/appsettings.json`, with ov
 - `Enabled` (`bool`): Toggle for the docker log harvester. Default: `true`.
 - `PollIntervalSeconds` (`int`): Delay between collection passes. Default: `30`.
 - `InitialLookbackMinutes` (`int`): How far back to fetch logs on the first run when no cursor exists. Default: `10`.
+- `Rotation` (`LogRotationOptions`): Retention policy applied to `/logs/services/<service>.log`.
+  - `MaxFileSizeBytes` (`long`): Rotate when the active log reaches this size. Default: `10485760` (10 MB).
+  - `MaxFileAgeDays` (`int`): Rotate when the active log is at least this many days old. Default: `7`.
+  - `MaxArchiveFiles` (`int`): Maximum number of rotated archives to retain per service (newest first). Default: `5`.

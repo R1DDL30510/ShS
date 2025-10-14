@@ -29,7 +29,7 @@
 4. **Worker überwachen**
    - `docker compose -f docker/compose.yaml logs -f shs-worker`.
    - Erwartete Logzeile: _"Detected service open-webui | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
-   - Prüfe die persistente Datei `${LOG_DIR:-../data/logs}/worker/worker-<Datum>.json` sowie die Cursor-Schnappschüsse unter `${LOG_DIR:-../data/logs}/state`.
+   - Prüfe die persistente Datei `${LOG_DIR:-../data/logs}/worker/worker-<Datum>.json` sowie die Cursor-Schnappschüsse unter `${LOG_DIR:-../data/logs}/state`. Bestätige, dass `${LOG_DIR:-../data/logs}/services/<service>.log` vorhanden ist und – falls größer oder älter – Rotation durch den Collector (`LogCollector:Rotation`) zu neuen Archivdateien führt.
 5. **Health Checks bestätigen**
    - `curl http://localhost:5080/health` (Worker Health).
    - `curl http://localhost:3003/api/system/info` (OpenWebUI).
@@ -68,7 +68,7 @@
 | --- | --- | --- |
 | 🟡 `testing-gap` | Keine automatisierten Tests. | Während Q&A proaktiv adressieren, Contribution-Aufruf wiederholen. |
 | 🟠 `gpu-policy-automation` | Enforcement fehlt. | Manuellen Prozess im Runbook betonen, Verantwortliche im Betrieb nennen. |
-| ??  `logging-analytics` | Zentrale Logs liegen als Dateien vor; Query- und Alerting-Layer fehlt. | Neue Ablage unter `${LOG_DIR}` hervorheben und Anforderungen für Loki/Elastic sammeln. | 
+| ??  `logging-analytics` | Zentrale Logs liegen als Dateien vor; Query- und Alerting-Layer fehlt. | Neue Ablage unter `${LOG_DIR}` hervorheben, integrierte Rotation (`LogCollector:Rotation`) dokumentieren und Anforderungen für Loki/Elastic sammeln. | 
 | 🔵 `documentation-sync` | Präsentationsinhalte ↔ README konsistent halten. | Nach jedem Merge `docs/presentation/presentation-outline.md` prüfen. |
 
 Aktualisiere diese Tabelle, sobald ein Flag erledigt ist. Nutze farbige Emojis, damit der Status auf den ersten Blick erkennbar ist.

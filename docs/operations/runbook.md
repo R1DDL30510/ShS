@@ -8,7 +8,7 @@
 ## Logs
 - Worker (live stream): `docker compose -f docker/compose.yaml logs shs-worker`.
 - Worker (persistent JSON): `${LOG_DIR:-../data/logs}/worker/worker-<date>.json` (PowerShell helper: `Get-Content -Path (Join-Path $PWD '..\data\logs\worker\worker-*.json') -Wait` when using the default path).
-- Service archives: `${LOG_DIR:-../data/logs}/services/<service>.log` contains the last harvested stdout per container (rotated by cursor).
+- Service archives: `${LOG_DIR:-../data/logs}/services/<service>.log` holds the latest harvested stdout per container. Files rotate automatically at ~10 MB or 7 days and keep five timestamped archives by default (`LogCollector:Rotation` in `appsettings.json` controls the limits).
 - OpenWebUI (live): `docker logs shs-stack-open-webui-1`.
 - Stable Diffusion (live): `docker logs shs-stack-automatic1111-1`.
 

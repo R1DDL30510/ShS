@@ -77,7 +77,7 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 ## Slide 11 - Operations & Runbook
 - Reference procedures in `docs/operations/runbook.md` (status checks, restarts, troubleshooting).
 - Mention GPU policy coordination (`docs/operations/gpu-policy.md`).
-- Call out zentrale Log-Ablage (`/logs/worker`, `/logs/services`, Cursor unter `/logs/state`) und wie Operatoren darauf zugreifen.
+- Call out zentrale Log-Ablage (`/logs/worker`, `/logs/services`, Cursor unter `/logs/state`) mit Hinweis auf die integrierte Rotation (`LogCollector:Rotation`) und wie Operatoren darauf zugreifen.
 - Emphasize manual enforcement of GPU guardrails (revision flag).
 - **Screenshot placeholder:** `[[Screenshot: Runbook markdown rendered]]`  
   - Use the IDE markdown preview or a documentation site rendering to illustrate operator guidance.
