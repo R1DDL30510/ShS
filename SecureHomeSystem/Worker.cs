@@ -42,9 +42,12 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "SecureHomeSystem worker initialised. Ollama: {OllamaUrl}, OpenWebUI: {OpenWebUiUrl}, StableDiffusion: {StableDiffusionUrl}",
+            "SecureHomeSystem worker initialised. {OllamaName}: {OllamaUrl}, {WebUiName}: {OpenWebUiUrl}, {StableDiffusionName}: {StableDiffusionUrl}",
+            _serviceEndpoints.Ollama.DisplayName,
             _serviceEndpoints.Ollama.BaseUrl,
+            _serviceEndpoints.OpenWebUi.DisplayName,
             _serviceEndpoints.OpenWebUi.BaseUrl,
+            _serviceEndpoints.StableDiffusion.DisplayName,
             _serviceEndpoints.StableDiffusion.BaseUrl);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -85,7 +88,7 @@ public class Worker : BackgroundService
 
             _logger.LogInformation(
                 "Detected service {ServiceName} | Container {ContainerId} | Image {Image} | Status {Status} | Running {IsRunning}",
-                service.Name,
+                service.DisplayName,
                 shortId,
                 service.Image,
                 service.Status,

@@ -28,12 +28,12 @@
    - Optionales Diffusion-Profil aktivieren: `docker compose --profile diffusion up -d automatic1111`.
 4. **Worker überwachen**
    - `docker compose -f docker/compose.yaml logs -f shs-worker`.
-   - Erwartete Logzeile: _"Detected service open-webui | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
+   - Erwartete Logzeile: _"Detected service HomeChatGPT | Container ..."_ (siehe `SecureHomeSystem/Worker.cs`).
 5. **Health Checks bestätigen**
-   - `curl http://localhost:3003/api/system/info` (OpenWebUI).
+   - `curl http://localhost:3003/api/system/info` (HomeChatGPT/OpenWebUI).
    - `curl -X POST http://localhost:7860/sdapi/v1/txt2img ...` (Stable-Diffusion-Smoke-Test – Prompt steht in `SecureHomeSystem/Configuration/ServiceEndpointsOptions.cs`).
 6. **Demo vorbereiten**
-   - Browser-Tabs öffnen (OpenWebUI, AUTOMATIC1111, ggf. Dashboard).
+   - Browser-Tabs öffnen (HomeChatGPT/OpenWebUI, AUTOMATIC1111, ggf. Dashboard).
    - Terminalfenster mit Worker-Logs bereithalten.
 7. **Präsentation synchronisieren**
    - Offene Revisionshinweise auf Folie 14 aktualisieren (`docs/presentation/presentation-outline.md`).
@@ -49,7 +49,7 @@
    - Detection Loop zeigen (`SecureHomeSystem/Worker.cs` → `DetectDockerServicesAsync`).
 3. **Live-Demo**
   - Worker-Log hervorheben: Container-ID, Image, Status (`SecureHomeSystem/Models/DetectedService.cs`).
-  - OpenWebUI-Interaktion: Prompt generieren, Verweis auf GPU-Limits.
+  - HomeChatGPT-Interaktion: Prompt generieren, Verweis auf GPU-Limits.
   - Optional: Diffusionsprofil starten, Wartezeit mit Hinweis auf `ServiceDetectionOptions.RetryCount` überbrücken.
 4. **Risiken & Flags (Folie 14)**
   - Health Endpoint fehlt (`docs/operations/runbook.md`).

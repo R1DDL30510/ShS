@@ -7,7 +7,7 @@
 
 ## Logs
 - Worker: `docker compose logs shs-worker`. ⚠️ Weiterleitung in das Windows-Ereignisprotokoll ist im aktuellen Worker-Build **nicht** konfiguriert; passen Sie diese Anleitung an, falls ein nativer Windows-Dienst hinzukommt.
-- OpenWebUI: `docker logs shs-stack-open-webui-1`.
+- HomeChatGPT (OpenWebUI): `docker logs shs-stack-open-webui-1`.
 - Stable Diffusion: `docker logs shs-stack-automatic1111-1`.
 
 ## Neustartrichtlinie
@@ -17,13 +17,13 @@
 
 ## Health Checks
 - ⚠️ HTTP-Health-Endpoint des Workers ist **noch nicht implementiert**. Ersetzen Sie diesen Platzhalter, sobald eine Probe verfügbar ist.
-- OpenWebUI: `curl http://localhost:3003/api/system/info`.
+- HomeChatGPT (OpenWebUI): `curl http://localhost:3003/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111: `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
 
 ## Datenpfade
 - `docker/.env` definiert Hostpfade für Volumes.
-- Persistente Daten liegen unter `data/open-webui`, `data/qdrant`, `data/automatic1111`.
+- Persistente Daten liegen unter `data/open-webui` (HomeChatGPT), `data/qdrant`, `data/automatic1111`.
 - Modell-Cache befindet sich in `models/stable-diffusion`.
 
 ## Häufige Probleme

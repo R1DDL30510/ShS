@@ -35,17 +35,45 @@ public sealed class DockerOptions
 
 public sealed class ServiceDetectionOptions
 {
-    /// <summary>
-    /// Dictionary linking logical service identifiers to required Docker labels. Match
-    /// these values with the <c>labels</c> defined in <c>docker/compose.yaml</c> when new
-    /// services are added to the stack.
-    /// </summary>
-    public Dictionary<string, string> LabelSelector { get; set; } = new()
+    private Dictionary<string, string> _labelSelector = new(StringComparer.OrdinalIgnoreCase)
     {
         ["open-webui"] = "shs.role=open-webui",
         ["qdrant"] = "shs.role=qdrant",
         ["stable-diffusion"] = "shs.role=stable-diffusion"
     };
+
+    private Dictionary<string, string> _friendlyNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["open-webui"] = "HomeChatGPT",
+        ["qdrant"] = "Qdrant",
+        ["stable-diffusion"] = "Stable Diffusion"
+    };
+
+    /// <summary>
+    /// Dictionary linking logical service identifiers to required Docker labels. Match
+    /// these values with the <c>labels</c> defined in <c>docker/compose.yaml</c> when new
+    /// services are added to the stack.
+    /// </summary>
+    public Dictionary<string, string> LabelSelector
+    {
+        get => _labelSelector;
+        set => _labelSelector = value is null
+            ? new(StringComparer.OrdinalIgnoreCase)
+            : new(value, StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Friendly service names surfaced in worker logs. Defaults keep the
+    /// OpenWebUI container branded as HomeChatGPT without renaming Compose
+    /// services, avoiding merge conflicts with upstream changes.
+    /// </summary>
+    public Dictionary<string, string> FriendlyNames
+    {
+        get => _friendlyNames;
+        set => _friendlyNames = value is null
+            ? new(StringComparer.OrdinalIgnoreCase)
+            : new(value, StringComparer.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// Grace period (in seconds) allowed for a container to appear during startup.
