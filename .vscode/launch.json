@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug SecureHomeSystem",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/SecureHomeSystem/bin/Debug/net9.0/SecureHomeSystem.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/SecureHomeSystem",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ]
+}
