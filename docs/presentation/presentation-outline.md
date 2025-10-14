@@ -58,7 +58,7 @@ Use this outline to produce a polished slide deck (≈15 slides) for stakeholder
 - Reference environment variables from `docker/.env` (`OLLAMA_BASE_URL`, `WEBUI_PORT`, etc.).
 - Note default authentication (`OPENWEBUI_AUTH=false`) and data directories.
 - **Screenshot placeholder:** `[[Screenshot: OpenWebUI landing page]]`  
-  - Access `http://localhost:3003`, capture the main dashboard once models load.
+  - Access `http://localhost:3000`, capture the main dashboard once models load.
 
 ## Slide 9 – Stable Diffusion (AUTOMATIC1111)
 - Explain optional diffusion profile and GPU reservations.

@@ -35,7 +35,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 ## Health Checks
 - Worker: `curl http://localhost:${WORKER_HEALTH_PORT:-5080}/health`.
 - Check container states with `docker compose ps`.
-- OpenWebUI: `curl http://localhost:3003/api/system/info`.
+- OpenWebUI: `curl http://localhost:3000/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111 (when the `diffusion` profile is active): `curl -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
 - The worker logs detected services every 30 seconds (`docker compose logs shs-worker`) and persists structured entries under `/logs/worker` inside the container (`LOG_DIR` on the host).
@@ -43,7 +43,7 @@ docker compose --profile diffusion up -d   # Stable Diffusion optional
 ## Checkpoints
 1. **Checkpoint 1 – Ollama/OpenWebUI**  
    - `docker compose --profile worker up -d --build`  
-   - Verify `shs-stack-open-webui-1` is healthy on `http://localhost:3003` and `shs-stack-qdrant-1` is serving `http://localhost:6334/readyz`.  
+   - Verify `shs-stack-open-webui-1` is healthy on `http://localhost:3000` and `shs-stack-qdrant-1` is serving `http://localhost:6334/readyz`.  
    - Run `dotnet run --project SecureHomeSystem` (or the worker container) to confirm detection logs show both services.
 2. **Checkpoint 2 – Stable Diffusion Ready**  
    - `docker compose --profile worker --profile diffusion up -d --build`  

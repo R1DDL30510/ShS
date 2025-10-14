@@ -32,7 +32,7 @@
    - Prüfe die persistente Datei `${LOG_DIR:-../data/logs}/worker/worker-<Datum>.json` sowie die Cursor-Schnappschüsse unter `${LOG_DIR:-../data/logs}/state`. Bestätige, dass `${LOG_DIR:-../data/logs}/services/<service>.log` vorhanden ist und – falls größer oder älter – Rotation durch den Collector (`LogCollector:Rotation`) zu neuen Archivdateien führt.
 5. **Health Checks bestätigen**
    - `curl http://localhost:5080/health` (Worker Health).
-   - `curl http://localhost:3003/api/system/info` (OpenWebUI).
+   - `curl http://localhost:3000/api/system/info` (OpenWebUI).
    - `curl -X POST http://localhost:7860/sdapi/v1/txt2img ...` (Stable Diffusion Smoke Test - Prompt steht in `SecureHomeSystem/Configuration/ServiceEndpointsOptions.cs`).
 6. **Demo vorbereiten**
    - Tabs im Browser öffnen (OpenWebUI, AUTOMATIC1111, ggf. Dashboard).

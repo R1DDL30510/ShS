@@ -38,7 +38,7 @@ Compose labels (`shs.role`) allow the worker to correlate running containers wit
    ```bash
    docker compose -f docker/compose.yaml logs -f shs-worker
    ```
-4. Access OpenWebUI at `http://localhost:3003` (unless overridden) and verify Stable Diffusion readiness at `http://localhost:7860`.
+4. Access OpenWebUI at `http://localhost:3000` (unless overridden) and verify Stable Diffusion readiness at `http://localhost:7860`.
 
 The worker reports each detected service with its container ID, image, status, and running flag, providing quick validation of stack health.
 

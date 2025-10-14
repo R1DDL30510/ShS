@@ -5,4 +5,4 @@ data/
 models/
 stablediff/
 docker/.env
-tests/SecureHomeSystem.Tests/SecureHomeSystem.Tests.csproj
+tests/SecureHomeSystem.Tests/TestResults

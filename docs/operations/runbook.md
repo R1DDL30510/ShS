@@ -19,7 +19,7 @@
 
 ## Health Checks
 - Worker: `curl http://localhost:${WORKER_HEALTH_PORT:-5080}/health` for HTTP 200 or `curl http://localhost:${WORKER_HEALTH_PORT:-5080}/live` for a minimal JSON liveness response.
-- OpenWebUI: `curl http://localhost:3003/api/system/info`.
+- OpenWebUI: `curl http://localhost:3000/api/system/info`.
 - Qdrant: `curl http://localhost:6334/readyz`.
 - AUTOMATIC1111: `curl -H "Content-Type: application/json" -X POST http://localhost:7860/sdapi/v1/txt2img -d '{"prompt":"test","steps":1,"width":64,"height":64}'`.
 

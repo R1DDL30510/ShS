@@ -44,7 +44,7 @@ public sealed class OpenWebUiOptions
     /// <summary>
     /// Base URL for the web UI. Defaults to the Compose port binding.
     /// </summary>
-    public string BaseUrl { get; set; } = "http://localhost:3003";
+    public string BaseUrl { get; set; } = "http://localhost:3000";
 
     /// <summary>
     /// Indicates if authentication is enforced. Mirrors the <c>OPENWEBUI_AUTH</c> flag.
