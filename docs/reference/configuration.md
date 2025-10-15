@@ -39,45 +39,45 @@ OPENWEBUI_AUTH=true              # Require login for OpenWebUI (set false only f
 The worker loads configuration from `SecureHomeSystem/appsettings.json`, with overrides applied by environment variables or additional JSON files such as `appsettings.Development.json`. The sections below list the supported keys and their defaults in this repository.
 
 ## `Docker`
-- `ComposeFilePath` (`string`): Path to the Compose file. Default: `docker/compose.yaml`.
-- `EnvironmentFile` (`string`): Relative path to the Compose `.env` file. Default: `docker/.env`.
-- `ProjectName` (`string`): Compose project name used when running CLI commands. Default: `shs-stack`.
-- `AutoStartProfiles` (`string[]`): Compose profiles the worker will attempt to start (repository default: `["worker"]`, development override adds `"diffusion"`).
+- `ComposeFilePath` (`string`): Path to the Compose file (required, non-empty). Default: `docker/compose.yaml`.
+- `EnvironmentFile` (`string`): Relative path to the Compose `.env` file (required, non-empty). Default: `docker/.env`.
+- `ProjectName` (`string`): Compose project name used when running CLI commands (required, non-empty). Default: `shs-stack`.
+- `AutoStartProfiles` (`string[]`): Compose profiles the worker will attempt to start; empty strings are rejected (repository default: `["worker"]`, development override adds `"diffusion"`).
 - `Detection` (`ServiceDetectionOptions`): Nested settings that control how Docker containers are matched.
 
 ### `Docker:Detection`
-- `LabelSelector` (`Dictionary<string,string>`): Expected Docker label filters keyed by logical service name. Defaults map the worker to the `shs.role` labels applied in `docker/compose.yaml` (`open-webui`, `qdrant`, `stable-diffusion`).
-- `StartupTimeoutSeconds` (`int`): Time window (seconds) allowed for a service to appear before detection reports a timeout. Default: `120`.
-- `RetryCount` (`int`): Number of detection retries before escalating. Default: `3`.
+- `LabelSelector` (`Dictionary<string,string>`): Expected Docker label filters keyed by logical service name (must contain at least one mapping with non-empty keys and values). Defaults map the worker to the `shs.role` labels applied in `docker/compose.yaml` (`open-webui`, `qdrant`, `stable-diffusion`).
+- `StartupTimeoutSeconds` (`int`): Time window (seconds) allowed for a service to appear before detection reports a timeout (must be ≥ 1). Default: `120`.
+- `RetryCount` (`int`): Number of detection retries before escalating (must be ≥ 0). Default: `3`.
 
 ## `Services`
 ### `Services:Ollama`
-- `BaseUrl` (`string`): Endpoint used for worker log messages. Repository default: `http://host.docker.internal:11434`.
-- `MaxGpuMemoryFraction` (`double`): Desired VRAM cap exposed to operators and downstream tooling. Default: `0.8` (80%).
-- `HealthEndpoint` (`string`): Path used for health checks. Default: `/api/tags`.
+- `BaseUrl` (`string`): Endpoint used for worker log messages (absolute HTTP/HTTPS URL required). Repository default: `http://host.docker.internal:11434`.
+- `MaxGpuMemoryFraction` (`double`): Desired VRAM cap exposed to operators and downstream tooling (range 0.0–1.0). Default: `0.8` (80%).
+- `HealthEndpoint` (`string`): Path used for health checks (must start with `/`). Default: `/api/tags`.
 
 ### `Services:OpenWebUi`
-- `BaseUrl` (`string`): URL announced by the worker. Repository default: `http://localhost:3000` (matching the Compose port binding).
-- `RequireAuth` (`bool`): Mirrors the authentication flag supplied to the OpenWebUI container. Default: `false`.
-- `HealthEndpoint` (`string`): Path used for manual health checks. Default: `/api/system/info`.
+- `BaseUrl` (`string`): URL announced by the worker (absolute HTTP/HTTPS URL required). Repository default: `http://localhost:3000` (matching the Compose port binding).
+- `RequireAuth` (`bool`): Mirrors the authentication flag supplied to the OpenWebUI container. Default: `true`.
+- `HealthEndpoint` (`string`): Path used for manual health checks (must start with `/`). Default: `/api/system/info`.
 
 ### `Services:StableDiffusion`
-- `BaseUrl` (`string`): Stable Diffusion UI endpoint. Repository default: `http://localhost:7860`.
-- `LaunchProfile` (`string`): Compose profile that must be enabled for Stable Diffusion. Default: `diffusion`.
-- `SmokeTestPrompt` (`string`): Short prompt placeholder for future smoke tests. Default: `Generate a 64x64 diagnostic image`.
+- `BaseUrl` (`string`): Stable Diffusion UI endpoint (absolute HTTP/HTTPS URL required). Repository default: `http://localhost:7860`.
+- `LaunchProfile` (`string`): Compose profile that must be enabled for Stable Diffusion (required, non-empty). Default: `diffusion`.
+- `SmokeTestPrompt` (`string`): Short prompt placeholder for future smoke tests (required, non-empty). Default: `Generate a 64x64 diagnostic image`.
 
 ## `ResourceScheduler`
-- `GpuUtilisationThreshold` (`double`): Preferred utilisation ceiling recorded in configuration. Default: `0.5` (50%).
-- `GpuMemoryThreshold` (`double`): Preferred VRAM ceiling recorded in configuration. Default: `0.8` (80%).
-- `PollIntervalSeconds` (`int`): Sampling cadence placeholder for future GPU telemetry. Default: `5` (development override reduces to `3`).
-- `QueueBackoffSeconds` (`int`): Delay placeholder for retrying queued jobs. Default: `30` (development override reduces to `10`).
+- `GpuUtilisationThreshold` (`double`): Preferred utilisation ceiling recorded in configuration (range 0.0–1.0). Default: `0.5` (50%).
+- `GpuMemoryThreshold` (`double`): Preferred VRAM ceiling recorded in configuration (range 0.0–1.0). Default: `0.8` (80%).
+- `PollIntervalSeconds` (`int`): Sampling cadence placeholder for future GPU telemetry (must be ≥ 1). Default: `5` (development override reduces to `3`).
+- `QueueBackoffSeconds` (`int`): Delay placeholder for retrying queued jobs (must be ≥ 1). Default: `30` (development override reduces to `10`).
 
 > **Note:** The worker currently records resource policy targets for operational awareness; automated enforcement is not yet implemented.
 
 ## `Health`
-- `Port` (`int`): TCP port bound by the worker for health and liveness endpoints. Default: `5080`.
-- `HealthPath` (`string`): Path exposed via ASP.NET Core health checks, consumed by the Compose health probe. Default: `/health`.
-- `LivenessPath` (`string`): Minimal JSON endpoint for quick manual checks. Default: `/live`.
+- `Port` (`int`): TCP port bound by the worker for health and liveness endpoints (range 1–65535). Default: `5080`.
+- `HealthPath` (`string`): Path exposed via ASP.NET Core health checks, consumed by the Compose health probe (required, non-empty; leading slash enforced automatically). Default: `/health`.
+- `LivenessPath` (`string`): Minimal JSON endpoint for quick manual checks (required, non-empty; leading slash enforced automatically). Default: `/live`.
 
 ## `Serilog`
 - `Using` (`string[]`): Assemblies that expose configured sinks. Defaults include `Serilog.Sinks.Console` and `Serilog.Sinks.File`.
@@ -87,19 +87,19 @@ The worker loads configuration from `SecureHomeSystem/appsettings.json`, with ov
 - `Properties:Application` (`string`): Static property stamped on every log event. Default: `SecureHomeSystem.Worker`.
 
 ## `LogStorage`
-- `RootPath` (`string`): Base directory for all persisted logs and cursors. Default: `/logs` (mapped from `${LOG_DIR}` in Compose).
-- `WorkerFolderName` (`string`): Subdirectory for Serilog output. Default: `worker`.
-- `ServicesFolderName` (`string`): Subdirectory for harvested container logs. Default: `services`.
-- `StateFolderName` (`string`): Subdirectory for per-service cursor files. Default: `state`.
+- `RootPath` (`string`): Base directory for all persisted logs and cursors (required, non-empty). Default: `/logs` (mapped from `${LOG_DIR}` in Compose).
+- `WorkerFolderName` (`string`): Subdirectory for Serilog output (required, non-empty). Default: `worker`.
+- `ServicesFolderName` (`string`): Subdirectory for harvested container logs (required, non-empty). Default: `services`.
+- `StateFolderName` (`string`): Subdirectory for per-service cursor files (required, non-empty). Default: `state`.
 
 ## `LogCollector`
 - `Enabled` (`bool`): Toggle for the docker log harvester. Default: `true`.
-- `PollIntervalSeconds` (`int`): Delay between collection passes. Default: `30`.
-- `InitialLookbackMinutes` (`int`): How far back to fetch logs on the first run when no cursor exists. Default: `10`.
+- `PollIntervalSeconds` (`int`): Delay between collection passes (must be ≥ 1 second). Default: `30`.
+- `InitialLookbackMinutes` (`int`): How far back to fetch logs on the first run when no cursor exists (must be ≥ 1 minute). Default: `10`.
 - `Rotation` (`LogRotationOptions`): Retention policy applied to `/logs/services/<service>.log`.
-  - `MaxFileSizeBytes` (`long`): Rotate when the active log reaches this size. Default: `10485760` (10 MB).
-  - `MaxFileAgeDays` (`int`): Rotate when the active log is at least this many days old. Default: `7`.
-  - `MaxArchiveFiles` (`int`): Maximum number of rotated archives to retain per service (newest first). Default: `5`.
+  - `MaxFileSizeBytes` (`long`): Rotate when the active log reaches this size (0 disables size-based rotation; negative values are rejected). Default: `10485760` (10 MB).
+  - `MaxFileAgeDays` (`int`): Rotate when the active log is at least this many days old (0 disables age-based rotation; negative values are rejected). Default: `7`.
+  - `MaxArchiveFiles` (`int`): Maximum number of rotated archives to retain per service (0 disables pruning by count; negative values are rejected). Default: `5`.
 
 ## Docker Labels Reference
 

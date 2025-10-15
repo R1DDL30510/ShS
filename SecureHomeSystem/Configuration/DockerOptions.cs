@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SecureHomeSystem.Configuration;
 
 public sealed class DockerOptions
@@ -6,18 +8,21 @@ public sealed class DockerOptions
     /// Relative path to the Compose file the worker references when surfacing
     /// operational commands. Defaults to the repository-managed stack definition.
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string ComposeFilePath { get; set; } = "docker/compose.yaml";
 
     /// <summary>
     /// Location of the Compose environment file. Operators customise host-specific
     /// paths and credentials here during release rehearsals.
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string EnvironmentFile { get; set; } = "docker/.env";
 
     /// <summary>
     /// Compose project name used to group containers. Keep this stable so screenshots
     /// and command snippets remain accurate over time.
     /// </summary>
+    [Required(AllowEmptyStrings = false)]
     public string ProjectName { get; set; } = "shs-stack";
 
     /// <summary>
@@ -30,6 +35,7 @@ public sealed class DockerOptions
     /// <summary>
     /// Detection settings that map Docker labels to logical service names.
     /// </summary>
+    [Required]
     public ServiceDetectionOptions Detection { get; set; } = new();
 }
 
@@ -40,6 +46,8 @@ public sealed class ServiceDetectionOptions
     /// these values with the <c>labels</c> defined in <c>docker/compose.yaml</c> when new
     /// services are added to the stack.
     /// </summary>
+    [Required]
+    [MinLength(1)]
     public Dictionary<string, string> LabelSelector { get; set; } = new()
     {
         ["open-webui"] = "shs.role=open-webui",
@@ -50,11 +58,13 @@ public sealed class ServiceDetectionOptions
     /// <summary>
     /// Grace period (in seconds) allowed for a container to appear during startup.
     /// </summary>
+    [Range(1, int.MaxValue)]
     public int StartupTimeoutSeconds { get; set; } = 120;
 
     /// <summary>
     /// Number of retries before the worker marks detection as failed. Use this during
     /// release planning to gauge how resilient the detection loop should be.
     /// </summary>
+    [Range(0, int.MaxValue)]
     public int RetryCount { get; set; } = 3;
 }

@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using System.Collections;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using SecureHomeSystem.Configuration;
 using SecureHomeSystem.Infrastructure;
 using SecureHomeSystem.Services;
@@ -52,17 +56,13 @@ public static class Program
                 .Enrich.FromLogContext();
         });
 
-        builder.Services.Configure<DockerOptions>(builder.Configuration.GetSection("Docker"));
-        builder.Services.Configure<ServiceEndpointsOptions>(builder.Configuration.GetSection("Services"));
-        builder.Services.Configure<ResourceSchedulerOptions>(builder.Configuration.GetSection("ResourceScheduler"));
-        builder.Services.Configure<HealthOptions>(builder.Configuration.GetSection("Health"));
-        builder.Services.Configure<LogStorageOptions>(builder.Configuration.GetSection("LogStorage"));
-        builder.Services.Configure<LogCollectorOptions>(builder.Configuration.GetSection("LogCollector"));
-
         var configuration = builder.Configuration;
-        var healthOptions = configuration.GetSection("Health").Get<HealthOptions>() ?? new();
-        var logCollectorOptions = configuration.GetSection("LogCollector").Get<LogCollectorOptions>() ?? new();
-        var logStorageOptions = configuration.GetSection("LogStorage").Get<LogStorageOptions>() ?? new();
+
+        RegisterOptions(builder.Services, configuration);
+
+        var healthOptions = BindAndValidate<HealthOptions>(configuration, "Health");
+        var logCollectorOptions = BindAndValidate<LogCollectorOptions>(configuration, "LogCollector");
+        var logStorageOptions = BindAndValidate<LogStorageOptions>(configuration, "LogStorage");
 
         EnsureLogDirectories(logStorageOptions);
 
@@ -93,6 +93,93 @@ public static class Program
         app.MapGet(livenessPath, () => Results.Ok(new { status = "Healthy" }));
 
         return app;
+    }
+
+    private static void RegisterOptions(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IValidateOptions<DockerOptions>, DockerOptionsValidator>();
+        services.AddSingleton<IValidateOptions<ServiceEndpointsOptions>, ServiceEndpointsOptionsValidator>();
+        services.AddSingleton<IValidateOptions<LogCollectorOptions>, LogCollectorOptionsValidator>();
+
+        services
+            .AddOptions<DockerOptions>()
+            .Bind(configuration.GetSection("Docker"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<ServiceEndpointsOptions>()
+            .Bind(configuration.GetSection("Services"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<ResourceSchedulerOptions>()
+            .Bind(configuration.GetSection("ResourceScheduler"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<HealthOptions>()
+            .Bind(configuration.GetSection("Health"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<LogStorageOptions>()
+            .Bind(configuration.GetSection("LogStorage"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<LogCollectorOptions>()
+            .Bind(configuration.GetSection("LogCollector"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+    }
+
+    private static T BindAndValidate<T>(IConfiguration configuration, string sectionName)
+        where T : class, new()
+    {
+        var instance = configuration.GetSection(sectionName).Get<T>() ?? new T();
+        ValidateObjectGraph(instance);
+        return instance;
+    }
+
+    private static void ValidateObjectGraph(object instance)
+    {
+        Validator.ValidateObject(instance, new ValidationContext(instance), validateAllProperties: true);
+
+        foreach (var property in instance.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+        {
+            var value = property.GetValue(instance);
+            if (value is null)
+            {
+                continue;
+            }
+
+            if (property.PropertyType == typeof(string) || property.PropertyType.IsValueType)
+            {
+                continue;
+            }
+
+            if (value is IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                {
+                    if (item is null || item is string || item.GetType().IsValueType)
+                    {
+                        continue;
+                    }
+
+                    ValidateObjectGraph(item);
+                }
+
+                continue;
+            }
+
+            ValidateObjectGraph(value);
+        }
     }
 
     /// <summary>
