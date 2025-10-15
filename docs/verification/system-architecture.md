@@ -1,194 +1,67 @@
-# System Architecture Analysis
+# ShS System Plan
 
-## Core Components
+## Architecture
 
-### Worker Service (`Worker.cs`)
-- Core orchestration loop running on 30-second intervals
-- Startup sequence:
-  1. Logs service endpoints (Ollama, OpenWebUI, StableDiffusion)
-  2. Enters detection loop until shutdown
-- Dependencies:
-  - `IDockerServiceDetector` - Container discovery
-  - `ServiceEndpointsOptions` - URL configuration
-- Design patterns:
-  - Background Service pattern
-  - Dependency Injection
-  - Options pattern for configuration
+### Core Services
+- **Worker (`Worker.cs`)**: Runs the orchestration loop at 30-second intervals, logging Ollama, OpenWebUI, and StableDiffusion endpoints during startup before entering the detection lifecycle. Leverages Dependency Injection, the Background Service pattern, and `ServiceEndpointsOptions` to maintain configurable URLs.
+- **Docker Service Detection (`DockerServiceDetector.cs`)**: Executes `docker ps` via the `IProcessRunner` abstraction, parses container metadata, and maps services through label selectors defined in `DockerOptions`, employing the Strategy and Command patterns for extensibility.
+- **Container Log Collector (`ContainerLogCollector.cs`)**: Performs cursor-based log harvesting in JSON Lines format with timestamp deduplication, configurable rotation, and dependency on `IDockerServiceDetector`, `IProcessRunner`, and log configuration options.
 
-### Docker Service Detection (`DockerServiceDetector.cs`)
-- Maps Docker containers to logical services
-- Process flow:
-  1. Executes `docker ps` with custom format
-  2. Parses container metadata (ID, name, image, status)
-  3. Maps containers using label selectors
-- Dependencies:
-  - `IProcessRunner` - Docker CLI abstraction
-  - `DockerOptions` - Label selector config
-- Design patterns:
-  - Strategy pattern (via interface)
-  - Command pattern (process execution)
+### Data and Control Flows
+- **Service Detection Sequence**: Worker triggers `DetectAsync`, `DockerServiceDetector` issues `docker ps` and maps results to logical services, then the Worker records health status.
+- **Log Collection Sequence**: For each detected service, the log collector requests `docker logs --since`, parses timestamps, writes structured logs to disk, and updates per-service cursors to avoid duplication.
 
-### Log Collection (`ContainerLogCollector.cs`)
-- Cursor-based log harvesting from containers
-- Features:
-  - JSON lines format for structured logging
-  - Timestamp-based cursor to prevent duplicates
-  - Configurable rotation and storage policies
-- Process flow:
-  1. Service detection
-  2. Per-service log collection
-  3. Cursor-based incremental appending
-  4. Optional log rotation
-- Dependencies:
-  - `IDockerServiceDetector` - Container discovery
-  - `IProcessRunner` - Docker logs command
-  - Log configuration options
+### Configuration Model
+- **ServiceEndpointsOptions** maintain base URLs for Ollama (`http://localhost:11434`), OpenWebUI (`http://localhost:3000`), and StableDiffusion (`http://localhost:7860`).
+- **DockerOptions** hold label selectors such as `shs.role=webui`, `shs.role=vector-db`, and `shs.role=diffusion` to isolate containers.
+- **LogCollectorOptions** and **LogStorageOptions** define collection cadence, rotation thresholds, storage roots (`/logs/services/` for JSONL output, `/logs/state/` for cursors), and retention rules.
 
-## Data Flow Patterns
+### Resource and Process Management
+- Cursor-based log collection and 30-second detection intervals balance responsiveness with resource efficiency.
+- Size and age-based log rotation prevent unbounded growth while enabling historical retention.
+- `IProcessRunner` provides cancellation-aware Docker CLI execution with retry and error-handling hooks for graceful shutdowns.
 
-### 1. Service Detection Flow
-```mermaid
-sequenceDiagram
-    Worker->>DockerServiceDetector: DetectAsync()
-    DockerServiceDetector->>ProcessRunner: docker ps
-    ProcessRunner-->>DockerServiceDetector: Container list
-    DockerServiceDetector->>DockerServiceDetector: Map labels to services
-    DockerServiceDetector-->>Worker: DetectedService[]
-    Worker->>Logger: Log service status
-```
+### Operational Interfaces
+- HTTP health checks expose service status, and structured logging supports observability alongside container status tracking.
+- Error diagnostics capture process exit codes and validate container state to accelerate troubleshooting.
 
-### 2. Log Collection Flow
-```mermaid
-sequenceDiagram
-    ContainerLogCollector->>DockerServiceDetector: DetectAsync()
-    DockerServiceDetector-->>ContainerLogCollector: DetectedService[]
-    loop For each service
-        ContainerLogCollector->>ProcessRunner: docker logs --since
-        ProcessRunner-->>ContainerLogCollector: Log output
-        ContainerLogCollector->>ContainerLogCollector: Parse timestamps
-        ContainerLogCollector->>FileSystem: Write JSON lines
-        ContainerLogCollector->>FileSystem: Update cursor
-    end
-```
+## Methodology
 
-## Configuration Patterns
+### Assurance Practices
+- **Unit Testing**: Mock `IProcessRunner` to validate detection logic, configuration binding, and exception handling paths.
+- **Integration Testing**: Compose Worker, Detector, and Collector instances to execute end-to-end detection and log collection workflows, asserting expected log entries and state transitions.
+- **Configuration Verification**: Continuously validate runtime options against deployment baselines to prevent misconfiguration drift.
 
-### 1. Service Options
-- `ServiceEndpointsOptions`: Base URLs for integrated services
-- `DockerOptions`: Container detection and label mapping
-- `LogCollectorOptions`: Collection intervals and rotation
-- `LogStorageOptions`: Path configuration and naming
+### Operational Cadence
+- Maintain iterative reviews of detection intervals, label selectors, and rotation thresholds to confirm alignment with workload patterns.
+- Document and replay troubleshooting runbooks to institutionalize incident response steps and shorten recovery time.
 
-### 2. Runtime Settings
-```json
-{
-  "ServiceEndpoints": {
-    "Ollama": { "BaseUrl": "http://localhost:11434" },
-    "OpenWebUI": { "BaseUrl": "http://localhost:3000" },
-    "StableDiffusion": { "BaseUrl": "http://localhost:7860" }
-  },
-  "Docker": {
-    "Detection": {
-      "LabelSelector": {
-        "open-webui": "shs.role=webui",
-        "qdrant": "shs.role=vector-db",
-        "automatic1111": "shs.role=diffusion"
-      }
-    }
-  }
-}
-```
+## Security Model
 
-## Resource Management
+### Isolation Controls
+- Apply label-based service identification to segment workloads while restricting Docker daemon access to read-only operations mediated through `IProcessRunner`.
+- Enforce filesystem permissions on log directories, limiting mutation to the collection service account.
 
-### 1. Log Storage
-- Directory structure:
-  - `/logs/services/` - Container logs as JSON lines
-  - `/logs/state/` - Timestamp cursors for incremental collection
-- Rotation policies:
-  - Size-based rotation with configurable thresholds
-  - Age-based retention for historical logs
+### Data Protection Measures
+- Timestamped cursors eliminate duplicate ingestion, reducing risk of replaying sanitized inputs.
+- Structured logging pipelines sanitize inputs before persistence and maintain least-privilege access to stored artifacts.
 
-### 2. Process Management
-- Docker CLI abstraction via `IProcessRunner`
-- Cancellation support for graceful shutdown
-- Error handling and retry logic
+### Operational Guardrails
+- Monitor health endpoints for anomalous behavior, integrate container status tracking into alerting, and verify process exit codes before reinitialization.
+- Audit configuration changes, especially label selectors and endpoint URLs, to preserve trusted service boundaries.
 
-## Security Considerations
+## Coverage and Planning Overview
 
-### 1. Container Isolation
-- Label-based service identification
-- Read-only access to Docker daemon
-- Controlled log directory permissions
+| Team | Current Coverage Summary | Score (0–5) | Next Planning Actions |
+| --- | --- | --- | --- |
+| Environment | Baseline configuration captured through `ServiceEndpointsOptions`, `DockerOptions`, and log storage paths. | 3 | Harden environment baselines with configuration drift detection and document runtime overrides. |
+| Network | Endpoint inventory for Ollama, OpenWebUI, and StableDiffusion with label-based container routing. | 2 | Define ingress/egress rules, verify network isolation between workloads, and model service discovery latency budgets. |
+| UI | Health endpoints provide status visibility; no dedicated UI workflow captured. | 1 | Collaborate with WebUI owners to extend monitoring dashboards with log summaries and detection metrics. |
+| Stability & Monitoring | Structured logs, HTTP health checks, and process exit diagnostics documented. | 3 | Integrate alert thresholds for detection failures, automate rotation validation, and schedule load resilience reviews. |
+| Security | Read-only Docker interactions, filesystem permissions, and sanitization practices outlined. | 4 | Formalize access review cadence, expand secret handling guidance, and validate compliance against organizational controls. |
 
-### 2. Data Protection
-- Cursor-based log collection prevents duplicates
-- Structured logging with sanitized input
-- File system permission boundaries
+### Change Validation Summary
+- Retained all original technical intents by restating Worker cadence, detection mechanics, log collection behavior, and configuration structures while organizing them under Architecture, Methodology, and Security Model.
+- Clarified operational and security guardrails to align with best-practice documentation without altering existing design assumptions.
+- Added cross-team planning table to surface coverage status, scores, and actionable next steps for environment, network, UI, stability/monitoring, and security teams.
 
-## Testing Strategy
-
-### 1. Unit Tests
-- Mock-based testing via `IProcessRunner`
-- Configuration validation
-- Error handling verification
-
-### 2. Integration Tests
-```csharp
-[Fact]
-[Trait("Category", "Integration")]
-public async Task FullStackScenario_RunsDetectionAndLogCollection()
-{
-    // Arrange core services
-    var detector = new DockerServiceDetector(...);
-    var worker = new Worker(...);
-    var collector = new ContainerLogCollector(...);
-
-    // Exercise detection flow
-    await worker.DetectOnceAsync(token);
-    
-    // Verify log collection
-    await collector.RunOnceAsync(token);
-    
-    // Assert expected behavior
-    workerLogger.Entries.Should().Contain(...);
-}
-```
-
-## Scalability Considerations
-
-### 1. Resource Efficiency
-- 30-second detection interval balances responsiveness
-- Cursor-based incremental log collection
-- Configurable rotation prevents unbounded growth
-
-### 2. Extensibility
-- Interface-based service detection
-- Pluggable process runner abstraction
-- Options pattern for runtime configuration
-
-## Operational Notes
-
-### 1. Service Health
-- HTTP health endpoints for monitoring
-- Structured logging for observability
-- Container status tracking
-
-### 2. Troubleshooting
-- Detailed error logging
-- Process exit code capture
-- Container state validation
-
-## Component Dependencies
-
-```mermaid
-graph TD
-    A[Worker] -->|Uses| B(DockerServiceDetector)
-    A -->|Reads| C(ServiceEndpointsOptions)
-    D[ContainerLogCollector] -->|Uses| B
-    B -->|Executes| E(ProcessRunner)
-    D -->|Executes| E
-    B -->|Reads| F(DockerOptions)
-    D -->|Reads| G(LogCollectorOptions)
-    D -->|Reads| H(LogStorageOptions)
-```
