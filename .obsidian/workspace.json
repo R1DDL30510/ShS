@@ -166,8 +166,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200,
-    "collapsed": true
+    "width": 200
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -189,16 +188,19 @@
   },
   "active": "d1211e6f39af1eb9",
   "lastOpenFiles": [
+    "AGENTtool.md",
+    "AGENTdocs/ResourcesEnvironment.md",
+    "AGENTdocs/CommandCapabilities.md",
+    "sedqmSgcC",
+    "sedljhpEJ",
+    "sedSy4jbO",
     "AGENTS.md",
     "complete.md",
-    "AGENTtool.md",
     "README.md",
     "insights.md",
     "setup/README.md",
     "docs/setup_process.md",
     "docs/Dependencies.md",
-    "AGENTdocs/CommandCapabilities.md",
-    "AGENTdocs/ResourcesEnvironment.md",
     "insights.txt",
     "complete.txt",
     "test_file.txt",
@@ -206,8 +208,6 @@
     "docs",
     "setup/setup_codex_minimal.sh",
     "AGENTdocs/test.txt",
-    "AGENTdocs",
-    "Untitled.md",
-    "setup"
+    "Untitled.md"
   ]
 }
